@@ -1,0 +1,30 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: localhost:4317
+
+processors:
+  batch:
+    timeout: 10s
+
+exporters:
+  otlp:
+    endpoint: https://otlp.eu01.nr-data.net:4317
+    headers:
+      "api-key": "eu01xx4ab133a94e4c5ab3b745eb05ee1802NRAL"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+  telemetry:
+    logs:
+      level: "info"
+      output_paths: "D:/Software/OpenTelemetryCollector/logs.log"
