@@ -2,13 +2,13 @@
 
 while (true)
 {
-    logger.Fatal("hello world");
+    // logger.Debug("Hello world");
+    // logger.Info("Hello world");
+    // logger.Warn("Hello world");
+    // logger.Error("Hello world");
+    logger.Fatal("Hello world");
     
-    Thread.Sleep(1000);
+    Thread.Sleep(100000);
 
     Console.WriteLine($"Sent at {DateTime.Now}.");
 }
-
-
-
-Console.WriteLine("Hello world");
