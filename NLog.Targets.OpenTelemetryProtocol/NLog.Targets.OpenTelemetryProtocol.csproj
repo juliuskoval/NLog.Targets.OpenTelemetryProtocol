@@ -9,10 +9,10 @@
 	<IncludeSymbols>True</IncludeSymbols>
 	<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 	<PackageTags>Logging;NLog;OpenTelemetry;OpenTelemetryProtocol</PackageTags>
-	<PackageLicenseUrl>https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/LICENSE.txt</PackageLicenseUrl>
 	<PackageProjectUrl>https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol</PackageProjectUrl>
 	<RepositoryUrl>https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol</RepositoryUrl>
 	<PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
+	<PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
