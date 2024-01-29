@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using NLog.Common;
+using NLog.Config;
 using NLog.Layouts;
 using NLog.Targets.OpenTelemetryProtocol;
 using NLog.Targets.OpenTelemetryProtocol.Exceptions;
@@ -12,7 +13,7 @@ using OpenTelemetry.Resources;
 namespace NLog.Targets
 {
     [Target("OtlpTarget")]
-    public class OtlpTarget : TargetWithLayout
+    public class OtlpTarget : TargetWithContext
     {
         private OpenTelemetry.Logs.Logger _logger;
 
@@ -20,38 +21,55 @@ namespace NLog.Targets
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
-        private List<KeyValuePair<string, Layout>> _attributes = new List<KeyValuePair<string, Layout>>();
+        public bool IncludeEventParameters { get; set; }
 
-        public bool UseHttp { get; set; } = false;
+        public Layout<bool> UseHttp { get; set; } = false;
 
-        public string Endpoint { get; set; }
+        public Layout Endpoint { get; set; }
 
-        public string Headers { get; set; }
-
-        public Layout Resources { get; set; }
+        public Layout Headers { get; set; }
 
         public Layout ServiceName { get; set; }
 
-        public Layout Attributes { get; set; }
+        public Layout<int> ScheduledDelayMilliseconds { get; set; } = 5000;
 
-        public int ScheduledDelayMilliseconds { get; set; } = 5000;
+        public Layout<int> MaxQueueSize { get; set; } = 2048;
 
-        public bool UseDefaultResources { get; set; } = true;
+        public Layout<int> MaxExportBatchSize { get; set; } = 512;
 
-        public bool IncludeFormattedMessage { get; set; } = false;
+        public Layout<bool> UseDefaultResources { get; set; } = true;
+
+        public Layout<bool> IncludeFormattedMessage { get; set; } = false;
+
+        [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
+        public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
+
+        [ArrayParameter(typeof(TargetPropertyWithContext), "attribute")]
+        public IList<TargetPropertyWithContext> Attributes => ContextProperties;
+
+        public OtlpTarget()
+        {
+            Layout = "${message}";
+            IncludeEventProperties = true;
+        }
 
         protected override void InitializeTarget()
         {
-            if (Attributes is not null)
-                ParseAttributes();
+            var endPoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
+            var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
+            var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
+            var maxQueueSize = RenderLogEvent(MaxQueueSize, LogEventInfo.CreateNullEvent(), 2048);
+            var maxExportBatchSize = RenderLogEvent(MaxExportBatchSize, LogEventInfo.CreateNullEvent(), 512);
+            var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
+            var includeFormattedMessage = RenderLogEvent(IncludeFormattedMessage, LogEventInfo.CreateNullEvent());
 
-            _processor = CreateProcessor();
+            _processor = CreateProcessor(endPoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
             
             _logger = Sdk
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
+                .AddProcessor(new LogRecordProcessor(includeFormattedMessage))
                 .AddProcessor(_processor)
                 .Build()
                 .GetLogger();
@@ -59,44 +77,27 @@ namespace NLog.Targets
             base.InitializeTarget();
         }
 
-        private void ParseAttributes()
-        {
-            try
-            {
-                var attributes = Attributes.ToString().Split(';');
-
-                foreach (var attribute in attributes)
-                {
-                    var kvp = attribute.Split('=');
-                    _attributes.Add(new KeyValuePair<string, Layout>(kvp[0], kvp[1]));
-                }
-            }
-            catch (Exception ex)
-            {
-                InternalLogger.Error(ex, "OtlpTarget(Name={0}) - An exception occured when parsing attributes.", Name);
-                throw new FailedToParseAttributesException("Failed to parse attributes");
-            }
-        }
-
-        private BatchLogRecordExportProcessor CreateProcessor()
+        private BatchLogRecordExportProcessor CreateProcessor(string endpoint, bool useHttp, string headers, int maxQueueSize, int maxExportBatchSize, int scheduledDelayMilliseconds)
         {
             try
             {
                 var options = new OtlpExporterOptions();
 
-                if (!String.IsNullOrEmpty(Headers))
-                    options.Headers = Headers;
+                if (!String.IsNullOrEmpty(headers))
+                    options.Headers = headers;
 
-                if (UseHttp)
+                if (useHttp)
                     options.Protocol = OtlpExportProtocol.HttpProtobuf;
 
-                if (!String.IsNullOrEmpty(Endpoint))
-                    options.Endpoint = new Uri(Endpoint);
+                if (!String.IsNullOrEmpty(endpoint))
+                    options.Endpoint = new Uri(endpoint);
 
                 BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(options);
                 return new BatchLogRecordExportProcessor(
                     otlpExporter,
-                    ScheduledDelayMilliseconds = this.ScheduledDelayMilliseconds);
+                    maxQueueSize: maxQueueSize,
+                    maxExportBatchSize: maxExportBatchSize,
+                    scheduledDelayMilliseconds: scheduledDelayMilliseconds);
             }
             catch (Exception ex)
             {
@@ -107,25 +108,24 @@ namespace NLog.Targets
         
         private ResourceBuilder CreateResourceBuilder()
         {
-            var resourceBuilder = UseDefaultResources ? ResourceBuilder.CreateDefault() : ResourceBuilder.CreateEmpty();
+            var defaultLogEvent = LogEventInfo.CreateNullEvent();
+
+            var useDefaultResources = RenderLogEvent(UseDefaultResources, defaultLogEvent, true);
+            var resourceBuilder = useDefaultResources ? ResourceBuilder.CreateDefault() : ResourceBuilder.CreateEmpty();
 
             try
             {
-                if (Resources is not null)
+                var resources = new List<KeyValuePair<string, object>>();
+                foreach (var resource in Resources)
                 {
-                    var resources = RenderLogEvent(Resources, LogEventInfo.CreateNullEvent()).Split(';');
-                    var attributes = new List<KeyValuePair<string, object>>();
-
-                    foreach (var resource in resources)
-                    {
-                        var kvp = resource.Split('=');
-                        attributes.Add(new KeyValuePair<string, object>(kvp[0], kvp[1]));
-                    }
-
-                    resourceBuilder.AddAttributes(attributes);
+                    var resourceValue = resource.RenderValue(defaultLogEvent);
+                    resources.Add(new KeyValuePair<string, object>(resource.Name, resourceValue));
                 }
 
-                var serviceName = RenderLogEvent(ServiceName, LogEventInfo.CreateNullEvent());
+                if (resources.Count > 0)
+                    resourceBuilder.AddAttributes(resources);
+
+                var serviceName = RenderLogEvent(ServiceName, defaultLogEvent);
                 if (!String.IsNullOrEmpty(serviceName))
                     resourceBuilder.AddService(serviceName);
             }
@@ -140,44 +140,75 @@ namespace NLog.Targets
 
         protected override void Write(LogEventInfo logEvent)
         {
-            var data = new LogRecordData
+            var formattedMessage = RenderLogEvent(Layout, logEvent);
+
+            var data = new LogRecordData()
             {
                 SeverityText = logEvent.Level.ToString(),
+                Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
-                Body = logEvent.FormattedMessage
+                Body = formattedMessage,
             };
 
-            var attributes = new LogRecordAttributeList { { OriginalFormatName, logEvent.Message } };
-
-            if (logEvent.Parameters is not null && logEvent.Parameters.Length > 0)
-                AppendParameters(logEvent, ref attributes);
-
-            if (_attributes.Count > 0)
-            {
-                foreach (var kvp in _attributes)
-                {
-                    attributes.Add(kvp.Key, RenderLogEvent(kvp.Value, LogEventInfo.CreateNullEvent()));
-                }
-            }
-
+            var attributes = new LogRecordAttributeList();
+            AppendAttributes(logEvent, ref attributes);
             _logger.EmitLog(data, attributes);
         }
 
-        private void AppendParameters(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
+        private void AppendAttributes(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
         {
-            if (logEvent.Properties.Count > 0) 
+            if (logEvent.Exception != null)
+                attributes.RecordException(logEvent.Exception);
+
+            if (logEvent.HasProperties)
             {
-                foreach (var kvp in logEvent.Properties)
+                attributes.Add(OriginalFormatName, logEvent.Message);
+            }
+            else if (IncludeEventParameters && logEvent.Parameters?.Length > 0)
+            {
+                for (int i = 0; i < logEvent.Parameters.Length; i++)
                 {
-                    attributes.Add(kvp.Key.ToString(), kvp.Value);
+                    attributes.Add($"{i}", logEvent.Parameters[i]);
                 }
-                return;
             }
 
-            for (int i = 0; i < logEvent.Parameters.Length; i++)
+            if (ShouldIncludeProperties(logEvent))
             {
-                attributes.Add($"{i}", logEvent.Parameters[i]);
+                var properties = GetAllProperties(logEvent);
+                foreach (var property in properties)
+                {
+                    attributes.Add(property.Key, property.Value);
+                }
+            }
+            else if (ContextProperties?.Count > 0)
+            {
+                foreach (var property in ContextProperties)
+                {
+                    var value = property.RenderValue(logEvent);
+                    if (!property.IncludeEmptyValue && (value is null || string.Empty.Equals(value)))
+                        continue;
+
+                    attributes.Add(property.Name, value);
+                }
             }
         }
+
+        private static LogRecordSeverity ResolveSeverity(LogLevel logLevel)
+        {
+            if (s_levelMap.TryGetValue(logLevel.Ordinal, out var severity))
+                return severity;
+            else
+                return LogRecordSeverity.Info;
+        }
+
+        private static readonly Dictionary<int, LogRecordSeverity> s_levelMap = new Dictionary<int, LogRecordSeverity>
+        {
+            { LogLevel.Fatal.Ordinal, LogRecordSeverity.Fatal },
+            { LogLevel.Error.Ordinal, LogRecordSeverity.Error },
+            { LogLevel.Warn.Ordinal, LogRecordSeverity.Warn },
+            { LogLevel.Info.Ordinal, LogRecordSeverity.Info },
+            { LogLevel.Debug.Ordinal, LogRecordSeverity.Debug },
+            { LogLevel.Trace.Ordinal, LogRecordSeverity.Trace },
+        };
     }
 }
