@@ -149,7 +149,7 @@ namespace NLog.Targets
 
             var attributes = new LogRecordAttributeList { { OriginalFormatName, logEvent.Message } };
 
-            if (logEvent.Parameters.Length > 0)
+            if (logEvent.Parameters is not null && logEvent.Parameters.Length > 0)
                 AppendParameters(logEvent, ref attributes);
 
             if (_attributes.Count > 0)
