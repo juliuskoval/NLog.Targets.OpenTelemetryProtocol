@@ -11,24 +11,24 @@ Example XML config:
 <?xml version="1.0" encoding="utf-8" ?>
 <nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	
+    
     <extensions>
         <add assembly="NLog.Targets.OpenTelemetryProtocol"/>
     </extensions>
 
     <targets>
       <target xsi:type="OtlpTarget"
-	    name="otlp"
-	    usehttp="true"
+        name="otlp"
+        usehttp="true"
         resources="process.name=${processname};process.id=${processid};deployment.environment=DEV"
-		attributes="thread.id=${thread.id}"
-	    servicename="TestService"
-		scheduledDelayMilliseconds="1000"
-		useDefaultResource="false"
-		includeFormattedMessage="true"/>
+        attributes="thread.id=${thread.id}"
+        servicename="TestService"
+        scheduledDelayMilliseconds="1000"
+        useDefaultResource="false"
+        includeFormattedMessage="true"/>
     </targets>
     <rules>
-		
+        
         <logger name="*" writeTo="otlp" />
     </rules>
 </nlog>

@@ -13,7 +13,15 @@
 	<RepositoryUrl>https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol</RepositoryUrl>
 	<PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
 	<PackageReference Include="NLog" Version="5.0.0" />
