@@ -24,7 +24,7 @@ Example XML config:
         attributes="thread.id=${thread.id}"
         servicename="TestService"
         scheduledDelayMilliseconds="1000"
-        useDefaultResource="false"
+        useDefaultResources="false"
         includeFormattedMessage="true"/>
     </targets>
     <rules>
