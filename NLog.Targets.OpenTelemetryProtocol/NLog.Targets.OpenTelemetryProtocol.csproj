@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
 	<LangVersion>Latest</LangVersion>
-	<Version>1.0.0</Version>
+	<Version>1.0.1</Version>
 	<Authors>Julius Koval</Authors>
 	<Description>NLog target used to export logs in the standardized OpenTelemetry format</Description>
 	<IncludeSymbols>True</IncludeSymbols>
