@@ -9,8 +9,10 @@ namespace NLog.Targets.OpenTelemetryProtocol.Test
             var logger = LogManager.GetCurrentClassLogger();
 
             var message = "testing";
-            logger.Fatal("message: {0}", message);
-    
+
+            logger.Fatal("message: {messageField}", message);
+
+
             Thread.Sleep(10000);
             
         }

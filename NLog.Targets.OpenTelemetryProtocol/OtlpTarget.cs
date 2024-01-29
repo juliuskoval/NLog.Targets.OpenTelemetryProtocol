@@ -149,13 +149,8 @@ namespace NLog.Targets
 
             var attributes = new LogRecordAttributeList { { OriginalFormatName, logEvent.Message } };
 
-            if (logEvent.Properties.Count>0)
-            {
-                foreach (var kvp in logEvent.Properties)
-                {
-                    attributes.Add(kvp.Key.ToString(), kvp.Value);
-                }
-            }
+            if (logEvent.Parameters.Length > 0)
+                AppendParameters(logEvent, ref attributes);
 
             if (_attributes.Count > 0)
             {
@@ -166,6 +161,23 @@ namespace NLog.Targets
             }
 
             _logger.EmitLog(data, attributes);
+        }
+
+        private void AppendParameters(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
+        {
+            if (logEvent.Properties.Count > 0) 
+            {
+                foreach (var kvp in logEvent.Properties)
+                {
+                    attributes.Add(kvp.Key.ToString(), kvp.Value);
+                }
+                return;
+            }
+
+            for (int i = 0; i < logEvent.Parameters.Length; i++)
+            {
+                attributes.Add($"{i}", logEvent.Parameters[i]);
+            }
         }
     }
 }
