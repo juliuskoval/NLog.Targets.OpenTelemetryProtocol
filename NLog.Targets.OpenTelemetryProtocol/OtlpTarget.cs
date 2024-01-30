@@ -55,7 +55,7 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
-            var endPoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
+            var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
             var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
             var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
             var maxQueueSize = RenderLogEvent(MaxQueueSize, LogEventInfo.CreateNullEvent(), 2048);
@@ -63,7 +63,7 @@ namespace NLog.Targets
             var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
             var includeFormattedMessage = RenderLogEvent(IncludeFormattedMessage, LogEventInfo.CreateNullEvent());
 
-            _processor = CreateProcessor(endPoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
+            _processor = CreateProcessor(endpoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
             
             _logger = Sdk
@@ -160,11 +160,9 @@ namespace NLog.Targets
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
 
-            if (logEvent.HasProperties)
-            {
-                attributes.Add(OriginalFormatName, logEvent.Message);
-            }
-            else if (IncludeEventParameters && logEvent.Parameters?.Length > 0)
+            attributes.Add(OriginalFormatName, logEvent.Message);
+
+            if (IncludeEventParameters && logEvent.Parameters?.Length > 0)
             {
                 for (int i = 0; i < logEvent.Parameters.Length; i++)
                 {
