@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using NLog.Common;
 using NLog.Config;
 using NLog.Layouts;
@@ -162,14 +163,6 @@ namespace NLog.Targets
 
             attributes.Add(OriginalFormatName, logEvent.Message);
 
-            if (IncludeEventParameters && logEvent.Parameters?.Length > 0)
-            {
-                for (int i = 0; i < logEvent.Parameters.Length; i++)
-                {
-                    attributes.Add($"{i}", logEvent.Parameters[i]);
-                }
-            }
-
             if (ShouldIncludeProperties(logEvent))
             {
                 var properties = GetAllProperties(logEvent);
@@ -178,16 +171,46 @@ namespace NLog.Targets
                     attributes.Add(property.Key, property.Value);
                 }
             }
-            else if (ContextProperties?.Count > 0)
+            else
             {
-                foreach (var property in ContextProperties)
+                if (IncludeEventParameters && logEvent.Parameters?.Length > 0)
                 {
-                    var value = property.RenderValue(logEvent);
-                    if (!property.IncludeEmptyValue && (value is null || string.Empty.Equals(value)))
-                        continue;
-
-                    attributes.Add(property.Name, value);
+                    for (int i = 0; i < logEvent.Parameters.Length; i++)
+                    {
+                        attributes.Add(ResolveParameterKey(i), logEvent.Parameters[i]);
+                    }
                 }
+
+                if (ContextProperties?.Count > 0)
+                {
+                    for (int i = 0; i< ContextProperties.Count; i++)
+                    {
+                        var property = ContextProperties[i];
+                        var value = property.RenderValue(logEvent);
+                        if (!property.IncludeEmptyValue && (value is null || string.Empty.Equals(value)))
+                            continue;
+
+                        attributes.Add(property.Name, value);
+                    }
+                }
+            }
+        }
+
+        private static string ResolveParameterKey(int index)
+        {
+            switch (index)
+            {
+                case 0: return "0";
+                case 1: return "1";
+                case 2: return "2";
+                case 3: return "3";
+                case 4: return "4";
+                case 5: return "5";
+                case 6: return "6";
+                case 7: return "7";
+                case 8: return "8";
+                case 9: return "9";
+                default: return index.ToString(CultureInfo.InvariantCulture);
             }
         }
 
