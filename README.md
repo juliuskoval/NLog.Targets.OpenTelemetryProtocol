@@ -20,15 +20,17 @@ Example XML config:
       <target xsi:type="OtlpTarget"
         name="otlp"
         usehttp="true"
-        resources="process.name=${processname};process.id=${processid};deployment.environment=DEV"
-        attributes="thread.id=${thread.id}"
         servicename="TestService"
         scheduledDelayMilliseconds="1000"
         useDefaultResources="false"
-        includeFormattedMessage="true"/>
+        includeFormattedMessage="true">
+          <attribute name="thread.id" layout="${threadid}" />
+          <resource name="process.name" layout="${processname}" />
+          <resource name="process.id" layout="${processid}" />
+          <resource name="deployment.environment" layout="DEV" />
+      </target>
     </targets>
     <rules>
-        
         <logger name="*" writeTo="otlp" />
     </rules>
 </nlog>
@@ -40,15 +42,22 @@ Example XML config:
 - **Endpoint** : Determines where the exporter should send logs. Used to set OtlpExporterOptions.Endpoint. 
 If left empty, the default values will be used (optional)
 - **Headers** : Used to set OtlpExporterOptions.Headers (optional)
-- **Resources** : Used to set resources in the ResourceBuilder. It must be in the format like in the example above (optional)
 - **ServiceName** : Used to set the service.name resource (optional)
-- **Attributes** : Attributes which each log should contain. It must be in the same format as resources. Attributes are rendered 
-everytime a log is written, so if an attribute would have the same value in all logs, set it in resources instead.
-- **ScheduledDelayMilliseconds** : The target uses a batch exporter, this defines how often it is flushed in milliseconds. 
-By default 5000, optional
+- **Resource** : Additional resources to include in the ResourceBuilder (optional)
+  - _Name_ : Name of Resource.
+  - _Layout_ : Value of Resource (Will only resolve value at target initialize)
+- **Attribute** : Attributes to be included with each LogEvent (optional)
+  - _Name_ : Name of Attribute.
+  - _Layout_ : Value of Attribute (If value is the same for all LogEvents, then add as resource instead)
+- **MaxQueueSize** : The target uses a batch exporter, this defines the max queue size. By default 2048, optional.
+- **MaxExportBatchSize** : The target uses a batch exporter, this defines the max batch size. By default 512, optional.
+- **ScheduledDelayMilliseconds** : The target uses a batch exporter, this defines how often it is flushed in milliseconds. By default 5000, optional.
 - **UseDefaultResources** : By default each exported batch will contain the resources telemetry.sdk.name, telemetry.sdk.language and telemetry.sdk.version. 
 If you don't want them, set to false.
 - **IncludeFormattedMessage** : If you're doing structured logging, this determines whether the body of the outputted log 
 should be the formatted message or the message template. By default false, meaning the body of the outputted log will be the message template.
 If you aren't doing structured logging, leave this as false.
+- **IncludeEventProperties** : If you're doing structured logging, this determines whether to include NLog LogEvent properties as attributes. By default true, optional.
+- **IncludeScopeProperties** : If you're doing structured logging, this determines whether to include NLog ScopeContext properties as attributes. By default false, optional.
+- **IncludeEventParameters** : Whether to fallback to including NLog LogEvent parameters as attributes, when no NLog LogEvent properties. By default false, optional.
 
