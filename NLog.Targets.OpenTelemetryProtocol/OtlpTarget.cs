@@ -20,6 +20,8 @@ namespace NLog.Targets
 
         private BatchLogRecordExportProcessor _processor;
 
+        private bool _includeFormattedMessage;
+
         private const string OriginalFormatName = "{OriginalFormat}";
 
         public bool IncludeEventParameters { get; set; }
@@ -62,7 +64,7 @@ namespace NLog.Targets
             var maxQueueSize = RenderLogEvent(MaxQueueSize, LogEventInfo.CreateNullEvent(), 2048);
             var maxExportBatchSize = RenderLogEvent(MaxExportBatchSize, LogEventInfo.CreateNullEvent(), 512);
             var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
-            var includeFormattedMessage = RenderLogEvent(IncludeFormattedMessage, LogEventInfo.CreateNullEvent());
+            _includeFormattedMessage = RenderLogEvent(IncludeFormattedMessage, LogEventInfo.CreateNullEvent());
 
             _processor = CreateProcessor(endpoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
@@ -70,7 +72,7 @@ namespace NLog.Targets
             _logger = Sdk
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddProcessor(new LogRecordProcessor(includeFormattedMessage))
+                .AddProcessor(new LogRecordProcessor(_includeFormattedMessage))
                 .AddProcessor(_processor)
                 .Build()
                 .GetLogger();
@@ -161,7 +163,8 @@ namespace NLog.Targets
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
 
-            attributes.Add(OriginalFormatName, logEvent.Message);
+            if (!(_includeFormattedMessage && logEvent.Parameters is null))
+                attributes.Add(OriginalFormatName, logEvent.Message);
 
             if (ShouldIncludeProperties(logEvent))
             {

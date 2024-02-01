@@ -15,7 +15,7 @@ namespace NLog.Targets.OpenTelemetryProtocol
 
         public override void OnEnd(LogRecord data)
         {
-            data.CategoryName = String.Empty; //Otlp exporter throws an exception if CategoryName is null, so this is a (hopefully) temporary workaround.
+            data.CategoryName = String.Empty; //Otlp exporter throws an exception if CategoryName is null, so this is a temporary workaround.
 
             if (_includeFormattedMessage)
                 data.FormattedMessage = data.Body;
