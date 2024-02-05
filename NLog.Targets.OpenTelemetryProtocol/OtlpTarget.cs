@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using NLog.Common;
 using NLog.Config;
 using NLog.Layouts;
@@ -20,11 +21,11 @@ namespace NLog.Targets
 
         private BatchLogRecordExportProcessor _processor;
 
-        private bool _includeFormattedMessage;
-
         private const string OriginalFormatName = "{OriginalFormat}";
 
         public bool IncludeEventParameters { get; set; }
+
+        public bool IncludeFormattedMessage { get; set; }
 
         public Layout<bool> UseHttp { get; set; } = false;
 
@@ -42,7 +43,6 @@ namespace NLog.Targets
 
         public Layout<bool> UseDefaultResources { get; set; } = true;
 
-        public Layout<bool> IncludeFormattedMessage { get; set; } = false;
 
         [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
         public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
@@ -64,7 +64,6 @@ namespace NLog.Targets
             var maxQueueSize = RenderLogEvent(MaxQueueSize, LogEventInfo.CreateNullEvent(), 2048);
             var maxExportBatchSize = RenderLogEvent(MaxExportBatchSize, LogEventInfo.CreateNullEvent(), 512);
             var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
-            _includeFormattedMessage = RenderLogEvent(IncludeFormattedMessage, LogEventInfo.CreateNullEvent());
 
             _processor = CreateProcessor(endpoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
@@ -72,12 +71,27 @@ namespace NLog.Targets
             _logger = Sdk
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddProcessor(new LogRecordProcessor(_includeFormattedMessage))
+                .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
                 .AddProcessor(_processor)
                 .Build()
                 .GetLogger();
             
             base.InitializeTarget();
+        }
+
+        protected override void CloseTarget()
+        {
+            var processor = _processor;
+            _processor = null;
+            var result = processor?.Shutdown(1000) ?? true;
+            if (!result)
+                InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccesful");
+            base.CloseTarget();
+        }
+
+        protected override void FlushAsync(AsyncContinuation asyncContinuation)
+        {
+            Task.Run(() => _processor?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
         }
 
         private BatchLogRecordExportProcessor CreateProcessor(string endpoint, bool useHttp, string headers, int maxQueueSize, int maxExportBatchSize, int scheduledDelayMilliseconds)
@@ -163,7 +177,7 @@ namespace NLog.Targets
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
 
-            if (!(_includeFormattedMessage && logEvent.Parameters is null))
+            if (!IncludeFormattedMessage || logEvent.Parameters?.Length > 0 || logEvent.HasProperties)
                 attributes.Add(OriginalFormatName, logEvent.Message);
 
             if (ShouldIncludeProperties(logEvent))

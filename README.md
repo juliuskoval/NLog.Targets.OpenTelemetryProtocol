@@ -1,3 +1,6 @@
+# NLog Target for OpenTelemetry
+[![Version](https://img.shields.io/nuget/v/NLog.Targets.OpenTelemetryProtocol.svg)](https://www.nuget.org/packages/NLog.Targets.OpenTelemetryProtocol ) 
+
 This target can export logs in the format defined in the OpenTelemetry specification using the OpenTelemetry.Exporter.OpenTelemetryProtocol package.
 
 For an explanation of the log data model, see https://opentelemetry.io/docs/specs/otel/logs/data-model/. <br>
