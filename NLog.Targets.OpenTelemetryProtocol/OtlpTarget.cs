@@ -23,6 +23,8 @@ namespace NLog.Targets
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
+        public List<LogRecord> LogRecords;
+
         public bool IncludeEventParameters { get; set; }
 
         public bool IncludeFormattedMessage { get; set; }
@@ -58,6 +60,7 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
+            LogRecords = new List<LogRecord>();
             var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
             var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
             var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
@@ -72,7 +75,7 @@ namespace NLog.Targets
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
-                .AddProcessor(_processor)
+                .AddInMemoryExporter(LogRecords)
                 .Build()
                 .GetLogger();
             
@@ -157,15 +160,18 @@ namespace NLog.Targets
 
         protected override void Write(LogEventInfo logEvent)
         {
-            var formattedMessage = RenderLogEvent(Layout, logEvent);
-
             var data = new LogRecordData()
             {
                 SeverityText = logEvent.Level.ToString(),
                 Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
-                Body = formattedMessage,
             };
+
+            if (IncludeFormattedMessage && (logEvent.Parameters?.Length > 0 || logEvent.HasProperties))
+            {
+                var formattedMessage = RenderLogEvent(Layout, logEvent);
+                data.Body = formattedMessage;
+            }
 
             var attributes = new LogRecordAttributeList();
             AppendAttributes(logEvent, ref attributes);
@@ -177,8 +183,7 @@ namespace NLog.Targets
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
 
-            if (!IncludeFormattedMessage || logEvent.Parameters?.Length > 0 || logEvent.HasProperties)
-                attributes.Add(OriginalFormatName, logEvent.Message);
+            attributes.Add(OriginalFormatName, logEvent.Message);
 
             if (ShouldIncludeProperties(logEvent))
             {

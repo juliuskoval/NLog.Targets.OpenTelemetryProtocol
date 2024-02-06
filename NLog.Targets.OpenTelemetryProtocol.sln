@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests", "UnitTests\OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests.csproj", "{3DF75DF2-99B1-46F1-BFE7-37FADF18E8F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -32,6 +34,10 @@ Global
 		{CF102428-A76F-40EE-ADA9-265412571FF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF102428-A76F-40EE-ADA9-265412571FF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF102428-A76F-40EE-ADA9-265412571FF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DF75DF2-99B1-46F1-BFE7-37FADF18E8F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DF75DF2-99B1-46F1-BFE7-37FADF18E8F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DF75DF2-99B1-46F1-BFE7-37FADF18E8F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DF75DF2-99B1-46F1-BFE7-37FADF18E8F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
