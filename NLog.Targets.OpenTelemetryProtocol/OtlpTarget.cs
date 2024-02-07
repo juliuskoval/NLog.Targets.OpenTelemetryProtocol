@@ -23,8 +23,9 @@ namespace NLog.Targets
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
+#if DEBUG
         public List<LogRecord> LogRecords;
-
+#endif
         public bool IncludeEventParameters { get; set; }
 
         public bool IncludeFormattedMessage { get; set; }
@@ -60,7 +61,9 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
+#if DEBUG
             LogRecords = new List<LogRecord>();
+#endif
             var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
             var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
             var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
@@ -75,7 +78,10 @@ namespace NLog.Targets
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
+                .AddProcessor(_processor)
+#if DEBUG
                 .AddInMemoryExporter(LogRecords)
+#endif
                 .Build()
                 .GetLogger();
             

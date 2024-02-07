@@ -8,6 +8,7 @@ public class TargetTests
 {
     private const string OriginalFormat = "{OriginalFormat}";
 
+#if DEBUG
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
@@ -300,4 +301,5 @@ public class TargetTests
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count == 0);
     }
+#endif
 }
