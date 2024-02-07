@@ -14,6 +14,7 @@
 	<PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<Configurations>Debug;Release;Test;Test</Configurations>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,7 @@
 
   <ItemGroup>
 	<PackageReference Include="NLog" Version="5.0.0" />
-    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0-rc.1" />
+	<PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="1.7.0-rc.1" />
+	<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0-rc.1" />
   </ItemGroup>
 </Project>
