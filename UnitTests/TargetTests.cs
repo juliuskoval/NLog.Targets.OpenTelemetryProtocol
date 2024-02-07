@@ -8,7 +8,7 @@ public class TargetTests
 {
     private const string OriginalFormat = "{OriginalFormat}";
 
-#if DEBUG
+#if TEST
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {

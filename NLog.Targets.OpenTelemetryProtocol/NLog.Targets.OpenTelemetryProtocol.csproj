@@ -14,6 +14,7 @@
 	<PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
 	<PackageLicenseExpression>MIT</PackageLicenseExpression>
 	<PackageReadmeFile>README.md</PackageReadmeFile>
+	<Configurations>Debug;Release;Test;Test</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

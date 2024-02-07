@@ -23,7 +23,7 @@ namespace NLog.Targets
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
-#if DEBUG
+#if TEST
         public List<LogRecord> LogRecords;
 #endif
         public bool IncludeEventParameters { get; set; }
@@ -61,7 +61,7 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
-#if DEBUG
+#if TEST
             LogRecords = new List<LogRecord>();
 #endif
             var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
@@ -79,7 +79,7 @@ namespace NLog.Targets
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
                 .AddProcessor(_processor)
-#if DEBUG
+#if TEST
                 .AddInMemoryExporter(LogRecords)
 #endif
                 .Build()
