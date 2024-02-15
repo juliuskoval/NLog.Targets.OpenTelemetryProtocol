@@ -13,11 +13,7 @@ namespace NLog.Targets.OpenTelemetryProtocol.Test
 
             logger.Fatal("message: {messageField}", message);
 
-#if DEBUG
-            Console.WriteLine("Debugging");
-#endif
             Thread.Sleep(10000);
-            
         }
     }
 }
