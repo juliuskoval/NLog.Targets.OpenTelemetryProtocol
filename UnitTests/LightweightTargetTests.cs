@@ -4,7 +4,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 
 namespace UnitTests;
 
-public class TargetTests
+public class LightweightTargetTests
 {
     private const string OriginalFormat = "{OriginalFormat}";
 
@@ -12,9 +12,9 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = true;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
@@ -49,9 +49,9 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithoutProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = true;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
@@ -75,9 +75,9 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = false;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
@@ -108,9 +108,9 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = false;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
@@ -134,9 +134,9 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = true;
         target.IncludeEventParameters = true;
         target.Dispose();
@@ -172,9 +172,9 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = false;
         target.IncludeEventParameters = true;
         target.Dispose();
@@ -205,9 +205,9 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithPropertiesAndParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = true;
         target.IncludeEventParameters = true;
         target.Dispose();
@@ -243,9 +243,9 @@ public class TargetTests
     //[Fact]
     //public void IncludeFormattedMessageWithParameters()
     //{
-    //    var logger = LogManager.GetLogger("otlp");
+    //    var logger = LogManager.GetLogger("lightweight");
 
-    //    OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.Where(x => x is OtlpTarget).First();
+    //    OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.Where(x => x is OtlpTargetLightweight).First();
     //    target.IncludeFormattedMessage = true;
     //    target.IncludeEventParameters = false;
     //    target.Dispose();
@@ -277,9 +277,9 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetLogger("lightweight");
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First();
+        OtlpTargetLightweight target = (OtlpTargetLightweight)LogManager.Configuration.AllTargets.First(x => x is OtlpTargetLightweight);
         target.IncludeFormattedMessage = false;
         target.IncludeEventParameters = false;
         target.Dispose();
