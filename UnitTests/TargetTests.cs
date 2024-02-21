@@ -12,7 +12,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
@@ -49,7 +49,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithoutProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
@@ -75,7 +75,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = false;
@@ -108,7 +108,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutProperties()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = false;
@@ -134,7 +134,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
@@ -172,7 +172,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = false;
@@ -205,7 +205,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithPropertiesAndParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
@@ -243,9 +243,9 @@ public class TargetTests
     //[Fact]
     //public void IncludeFormattedMessageWithParameters()
     //{
-    //    var logger = LogManager.GetLogger("otlp");
+    //    var logger = LogManager.GetCurrentClassLogger();
 
-    //    OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.Where(x => x is OtlpTarget).First();
+    //    OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
     //    target.IncludeFormattedMessage = true;
     //    target.IncludeEventParameters = false;
     //    target.Dispose();
@@ -277,9 +277,9 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutParameters()
     {
-        var logger = LogManager.GetLogger("otlp");
+        var logger = LogManager.GetCurrentClassLogger();
 
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First();
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = false;
         target.IncludeEventParameters = false;
         target.Dispose();

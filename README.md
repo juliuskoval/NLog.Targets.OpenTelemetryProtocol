@@ -3,10 +3,6 @@
 
 This target can export logs in the format defined in the OpenTelemetry specification using the OpenTelemetry.Exporter.OpenTelemetryProtocol package.
 
-The package also includes a lightweight version of the target called `OtlpTargetLightweight`, which is missing some features (`GlobalDiagnosticsContext`,
-`MappedDiagnosticsContext`, `MappedDiagnosticsLogicalContext`),
-but is about twice as fast and allocates about half as much memory. Configs for the 2 targets are compatible.
-
 For an explanation of the log data model, see https://opentelemetry.io/docs/specs/otel/logs/data-model/. <br>
 For an example, see https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/#examples.
 
@@ -19,42 +15,27 @@ Example XML config:
 <nlog xmlns="http://www.nlog-project.org/schemas/NLog.xsd"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     
-	<extensions>
-		<add assembly="NLog.Targets.OpenTelemetryProtocol"/>
-	</extensions>
+    <extensions>
+        <add assembly="NLog.Targets.OpenTelemetryProtocol"/>
+    </extensions>
 
-	<targets>
-		<target xsi:type="OtlpTarget"
-		        name="otlp"
-		        usehttp="true"
-		        servicename="TestService"
-		        scheduledDelayMilliseconds="1000"
-		        useDefaultResources="false"
-		        includeFormattedMessage="false">
-			<attribute name="thread.id" layout="${threadid}" />
-			<resource name="process.name" layout="${processname}" />
-			<resource name="process.id" layout="${processid}" />
-			<resource name="deployment.environment" layout="DEV" />
-		</target>
-
-		<target xsi:type="OtlpTargetLightweight"
-		        name="lightweight"
-		        usehttp="true"
-		        servicename="TestService"
-		        scheduledDelayMilliseconds="1000"
-		        useDefaultResources="false"
-		        includeFormattedMessage="false">
-			<attribute name="thread.id" layout="${threadid}" />
-			<resource name="process.name" layout="${processname}" />
-			<resource name="process.id" layout="${processid}" />
-			<resource name="deployment.environment" layout="DEV" />
-		</target>
-	</targets>
-
-	<rules>
-		<logger name="*" writeTo="otlp" />
-		<logger name="*" writeTo="lightweight" />
-	</rules>
+    <targets>
+      <target xsi:type="OtlpTarget"
+        name="otlp"
+        usehttp="true"
+        servicename="TestService"
+        scheduledDelayMilliseconds="1000"
+        useDefaultResources="false"
+        includeFormattedMessage="true">
+          <attribute name="thread.id" layout="${threadid}" />
+          <resource name="process.name" layout="${processname}" />
+          <resource name="process.id" layout="${processid}" />
+          <resource name="deployment.environment" layout="DEV" />
+      </target>
+    </targets>
+    <rules>
+        <logger name="*" writeTo="otlp" />
+    </rules>
 </nlog>
 ```
 
