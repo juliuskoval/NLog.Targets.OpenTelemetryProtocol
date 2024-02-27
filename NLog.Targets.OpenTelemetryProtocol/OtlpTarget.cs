@@ -186,7 +186,7 @@ namespace NLog.Targets
 
         private void AppendAttributes(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
         {
-            attributes.Add(OriginalFormatName, logEvent.Message);
+            attributes.Add(OriginalFormatName, logEvent.Message ?? string.Empty);
 
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
