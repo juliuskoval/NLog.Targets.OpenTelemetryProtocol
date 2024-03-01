@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## Unreleased
+
+* Added a unit test([#9](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/9))
+
 ## 1.0.8
 * Making sure that the value of the \{OriginalFormat\} attribute is never null ([#8](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/8))
 
