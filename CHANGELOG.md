@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-* Upgraded OpenTelemetry packages to version 1.8.0-beta.1([#10](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/10))
+* Upgraded OpenTelemetry packages to version 1.8.0-beta.1 ([#10](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/10))
 
-* Added a unit test([#9](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/9))
+* Added a unit test ([#9](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/9))
 
 ## 1.0.8
 * Making sure that the value of the \{OriginalFormat\} attribute is never null ([#8](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/8))
