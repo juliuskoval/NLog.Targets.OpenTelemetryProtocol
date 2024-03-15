@@ -26,10 +26,10 @@
 
   <ItemGroup>
 	<PackageReference Include="NLog" Version="5.0.0" />
-	<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.7.0-rc.1" />
+	<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.8.0-beta.1" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(Configuration)' == 'Test' ">
-  	<PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="1.7.0-rc.1" />
+  	<PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="1.8.0-beta.1" />
   </ItemGroup>
 </Project>
