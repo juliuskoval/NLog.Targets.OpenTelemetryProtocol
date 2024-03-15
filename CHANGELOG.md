@@ -1,7 +1,6 @@
 ﻿# Changelog
 
-## Unreleased
-
+## 1.1.0
 * The target will now have a private logger provider, which will get a logger with the name of the NLog logger whenever a log is written, 
 so that the `scopeLogs` field in export requests will be populated by the name of the NLog logger. ([#11](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/11))
 
