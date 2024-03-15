@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -17,9 +18,12 @@ namespace NLog.Targets
     [Target("OtlpTarget")]
     public class OtlpTarget : TargetWithContext
     {
-        private OpenTelemetry.Logs.Logger _logger;
+        private LoggerProvider _loggerProvider;
 
         private BatchLogRecordExportProcessor _processor;
+
+        private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
+        private readonly object _sync = new object();
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
@@ -74,7 +78,7 @@ namespace NLog.Targets
             _processor = CreateProcessor(endpoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
             
-            _logger = Sdk
+            _loggerProvider = Sdk
                 .CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
@@ -82,8 +86,7 @@ namespace NLog.Targets
 #if TEST
                 .AddInMemoryExporter(LogRecords)
 #endif
-                .Build()
-                .GetLogger();
+                .Build();
             
             base.InitializeTarget();
         }
@@ -181,7 +184,7 @@ namespace NLog.Targets
 
             var attributes = new LogRecordAttributeList();
             AppendAttributes(logEvent, ref attributes);
-            _logger.EmitLog(data, attributes);
+            GetLogger(logEvent.LoggerName).EmitLog(data, attributes);
         }
 
         private void AppendAttributes(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
@@ -266,5 +269,22 @@ namespace NLog.Targets
             { LogLevel.Debug.Ordinal, LogRecordSeverity.Debug },
             { LogLevel.Trace.Ordinal, LogRecordSeverity.Trace },
         };
+
+        private OpenTelemetry.Logs.Logger GetLogger(string name)
+        {
+            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger? logger))
+            {
+                lock (_sync)
+                {
+                    if (!_loggers.TryGetValue(name, out logger))
+                    {
+                        logger = _loggerProvider.GetLogger(name);
+                        _loggers[name] = logger;
+                    }
+                }
+            }
+
+            return logger;
+        }
     }
 }
