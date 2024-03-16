@@ -93,11 +93,17 @@ namespace NLog.Targets
 
         protected override void CloseTarget()
         {
+            var logProvider = _loggerProvider;
+            _loggerProvider = null;
+            logProvider?.Dispose();
+            _loggers.Clear();
+
             var processor = _processor;
             _processor = null;
             var result = processor?.Shutdown(1000) ?? true;
             if (!result)
                 InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccesful");
+
             base.CloseTarget();
         }
 
