@@ -154,7 +154,7 @@ namespace NLog.Targets
                 foreach (var resource in Resources)
                 {
                     var resourceValue = resource.RenderValue(defaultLogEvent);
-                    resources.Add(new KeyValuePair<string, object>(resource.Name, resourceValue));
+                    resources.Add(new KeyValuePair<string, object>(resource.Name, resourceValue ?? string.Empty));
                 }
 
                 if (resources.Count > 0)
