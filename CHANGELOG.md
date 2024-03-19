@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+## 1.1.1
+* When trying to add a resource with a null value, the value will instead default to an empty string and the target will be initialised 
+([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/26edf215d44ada89886a55b7ef9c5defef596d18))
+
+* Modifying nlog.config in the Test project ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/c776ff519c08d8b43efd549936fa8af51e6282f8))
+
+* Dispose LoggerProvider and clear Loggers when closing target ([#12](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/12))
+
 ## 1.1.0
 * The target will now have a private logger provider, which will get a logger with the name of the NLog logger whenever a log is written, 
 so that the `scopeLogs` field in export requests will be populated by the name of the NLog logger. ([#11](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/11))
