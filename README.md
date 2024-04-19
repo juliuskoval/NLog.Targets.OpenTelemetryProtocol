@@ -63,4 +63,9 @@ If you aren't doing structured logging, leave this as false.
 - **IncludeEventProperties** : If you're doing structured logging, this determines whether to include NLog LogEvent properties as attributes. By default true, optional.
 - **IncludeScopeProperties** : If you're doing structured logging, this determines whether to include NLog ScopeContext properties as attributes. By default false, optional.
 - **IncludeEventParameters** : Whether to fallback to including NLog LogEvent parameters as attributes, when no NLog LogEvent properties. By default false, optional.
+- **ResolveOptionsFromName** : Allows you to use the [Options pattern](https://learn.microsoft.com/en-my/dotnet/core/extensions/options) to initialize the target using 
+ an instance of `OtlpExporterOptions` defined in appsettings.json. If the setting is not empty, NLog will try to resolve `OtlpExporterOptions` from the name given by this setting
+ and `UseHttp`, `Endpoint` and `Headers` will be ignored. For an example, see the `TestWebApp` project.
+
+
 

@@ -3,6 +3,8 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using NLog.Common;
 using NLog.Config;
 using NLog.Layouts;
@@ -33,6 +35,8 @@ namespace NLog.Targets
         public bool IncludeEventParameters { get; set; }
 
         public bool IncludeFormattedMessage { get; set; }
+
+        public Layout ResolveOptionsFromName { get; set; }
 
         public Layout<bool> UseHttp { get; set; } = false;
 
@@ -68,14 +72,14 @@ namespace NLog.Targets
 #if TEST
             LogRecords = new List<LogRecord>();
 #endif
-            var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
-            var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
-            var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
+
             var maxQueueSize = RenderLogEvent(MaxQueueSize, LogEventInfo.CreateNullEvent(), 2048);
             var maxExportBatchSize = RenderLogEvent(MaxExportBatchSize, LogEventInfo.CreateNullEvent(), 512);
             var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
 
-            _processor = CreateProcessor(endpoint, useHttp, headers, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
+            var options = ResolveOtlpExporterOptionsFromName() ?? GetOtlpExporterOptions();
+
+            _processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
             
             _loggerProvider = Sdk
@@ -91,42 +95,48 @@ namespace NLog.Targets
             base.InitializeTarget();
         }
 
-        protected override void CloseTarget()
+        private OtlpExporterOptions ResolveOtlpExporterOptionsFromName()
         {
-            var logProvider = _loggerProvider;
-            _loggerProvider = null;
-            logProvider?.Dispose();
-            _loggers.Clear();
+            var resolvedOptionsName = RenderLogEvent(ResolveOptionsFromName, LogEventInfo.CreateNullEvent());
 
-            var processor = _processor;
-            _processor = null;
-            var result = processor?.Shutdown(1000) ?? true;
-            if (!result)
-                InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccesful");
+            if (string.IsNullOrEmpty(resolvedOptionsName))
+            {
+                return null;
+            }
 
-            base.CloseTarget();
+            using IServiceScope scope = this.ResolveService<IServiceScopeFactory>().CreateScope();
+
+            InternalLogger.Debug("{0} - Resolved OtlpExporterOptions from name '{1}'", this, resolvedOptionsName);
+
+            var options = scope.ServiceProvider.GetService<IOptionsSnapshot<OtlpExporterOptions>>().Get(resolvedOptionsName);
+
+            return options;
         }
 
-        protected override void FlushAsync(AsyncContinuation asyncContinuation)
+        private OtlpExporterOptions GetOtlpExporterOptions()
         {
-            Task.Run(() => _processor?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
+            var endpoint = RenderLogEvent(Endpoint, LogEventInfo.CreateNullEvent());
+            var useHttp = RenderLogEvent(UseHttp, LogEventInfo.CreateNullEvent());
+            var headers = RenderLogEvent(Headers, LogEventInfo.CreateNullEvent());
+
+            var options = new OtlpExporterOptions();
+
+            if (!String.IsNullOrEmpty(headers))
+                options.Headers = headers;
+
+            if (useHttp)
+                options.Protocol = OtlpExportProtocol.HttpProtobuf;
+
+            if (!String.IsNullOrEmpty(endpoint))
+                options.Endpoint = new Uri(endpoint);
+
+            return options;
         }
 
-        private BatchLogRecordExportProcessor CreateProcessor(string endpoint, bool useHttp, string headers, int maxQueueSize, int maxExportBatchSize, int scheduledDelayMilliseconds)
+        private BatchLogRecordExportProcessor CreateProcessor(OtlpExporterOptions options, int maxQueueSize, int maxExportBatchSize, int scheduledDelayMilliseconds)
         {
             try
             {
-                var options = new OtlpExporterOptions();
-
-                if (!String.IsNullOrEmpty(headers))
-                    options.Headers = headers;
-
-                if (useHttp)
-                    options.Protocol = OtlpExportProtocol.HttpProtobuf;
-
-                if (!String.IsNullOrEmpty(endpoint))
-                    options.Endpoint = new Uri(endpoint);
-
                 BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(options);
                 return new BatchLogRecordExportProcessor(
                     otlpExporter,
@@ -140,7 +150,7 @@ namespace NLog.Targets
                 throw new FailedToCreateProcessorException("Failed to create an export processor");
             }
         }
-        
+
         private ResourceBuilder CreateResourceBuilder()
         {
             var defaultLogEvent = LogEventInfo.CreateNullEvent();
@@ -171,6 +181,27 @@ namespace NLog.Targets
             }
 
             return resourceBuilder;
+        }
+
+        protected override void CloseTarget()
+        {
+            var logProvider = _loggerProvider;
+            _loggerProvider = null;
+            logProvider?.Dispose();
+            _loggers.Clear();
+
+            var processor = _processor;
+            _processor = null;
+            var result = processor?.Shutdown(1000) ?? true;
+            if (!result)
+                InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
+
+            base.CloseTarget();
+        }
+
+        protected override void FlushAsync(AsyncContinuation asyncContinuation)
+        {
+            Task.Run(() => _processor?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
         }
 
         protected override void Write(LogEventInfo logEvent)
