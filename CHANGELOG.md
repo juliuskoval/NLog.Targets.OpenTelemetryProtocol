@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+## Unreleased
+* Added support for the [Options pattern](https://learn.microsoft.com/en-my/dotnet/core/extensions/options)
+([#14](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/14))
+
+
 ## 1.1.1
 * When trying to add a resource with a null value, the value will instead default to an empty string and the target will be initialised 
 ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/26edf215d44ada89886a55b7ef9c5defef596d18))
