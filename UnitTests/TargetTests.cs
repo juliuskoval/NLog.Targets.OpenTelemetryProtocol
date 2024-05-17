@@ -15,6 +15,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -52,6 +53,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithPropertiesAndParameters()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -90,6 +92,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithoutProperties()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -116,6 +119,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageAndIncludeParameters()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -154,6 +158,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageAndDontIncludeParameters()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -190,6 +195,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithProperties()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -223,6 +229,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutProperties()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -249,6 +256,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithParameters()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -282,6 +290,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutParameters()
     {
+        LogManager.LoadConfiguration("nlog.config");
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -307,6 +316,208 @@ public class TargetTests
         Assert.Empty(otlpLogRecord.Attributes);
     }
     #endregion
+
+    [Fact]
+    public void ExludeProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.ExcludeProperties = new HashSet<string>() { "message", "someProperty"};
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.Single(otlpLogRecord.Attributes);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("id", attribute.Key);
+        Assert.Equal(property2, attribute.Value.IntValue);
+    }
+
+    [Fact]
+    public void ExcludeNonExistentProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.ExcludeProperties = new HashSet<string>() { "someProperty" };
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.True(otlpLogRecord.Attributes.Count == 2);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("message", attribute.Key);
+        Assert.Equal(property1, attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("id", attribute.Key);
+        Assert.Equal(property2, attribute.Value.IntValue);
+    }
+
+    [Fact]
+    public void ExcludeAllProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.ExcludeProperties = new HashSet<string>() { "id", "message", "someProperty" };
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    [Fact]
+    public void OnlyIncludeProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.OnlyIncludeProperties = new HashSet<string>() { "id", "someProperty" };
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.Single(otlpLogRecord.Attributes);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("id", attribute.Key);
+        Assert.Equal(property2, attribute.Value.IntValue);
+    }
+
+    [Fact]
+    public void OnlyIncludeAllProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.OnlyIncludeProperties = new HashSet<string>() { "message", "id", "someProperty" };
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.True(otlpLogRecord.Attributes.Count == 2);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("message", attribute.Key);
+        Assert.Equal(property1, attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("id", attribute.Key);
+        Assert.Equal(property2, attribute.Value.IntValue);
+    }
+
+    [Fact]
+    public void OnlyIncludeNonExistentProperties()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.OnlyIncludeProperties = new HashSet<string>() { "someProperty" };
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {message}, id: {id}";
+        var property1 = "testing";
+        var property2 = 123;
+
+
+        logger.Info(message, property1, property2);
+
+        Assert.Single(target.LogRecords);
+
+
+        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
+
+        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+        Assert.Empty(otlpLogRecord.Attributes);
+    }
 
 #endif
 }

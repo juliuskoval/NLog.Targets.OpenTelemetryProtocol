@@ -54,6 +54,7 @@ namespace NLog.Targets
 
         public Layout<bool> UseDefaultResources { get; set; } = true;
 
+        public HashSet<string> OnlyIncludeProperties { get; set; }
 
         [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
         public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
@@ -65,6 +66,7 @@ namespace NLog.Targets
         {
             Layout = "${message}";
             IncludeEventProperties = true;
+            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         protected override void InitializeTarget()
@@ -245,7 +247,18 @@ namespace NLog.Targets
                 {
                     foreach (var property in logEvent.Properties)
                     {
-                        attributes.Add(property.Key.ToString(), property.Value);
+                        var key = property.Key.ToString();
+                        if (OnlyIncludeProperties.Count > 0)
+                        {
+                            if (OnlyIncludeProperties.Contains(key))
+                                attributes.Add(key, property.Value);
+                            continue;
+                        }
+
+                        if (ExcludeProperties.Count > 0 && ExcludeProperties.Contains(key))
+                            continue;
+
+                        attributes.Add(key, property.Value);
                     }
                 }
                 else if (IncludeEventParameters && logEvent.Parameters?.Length > 0)

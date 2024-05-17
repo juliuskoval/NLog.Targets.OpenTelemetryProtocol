@@ -1,6 +1,9 @@
 ﻿# Changelog
 
 ## Unreleased
+* Added a new property `OnlyIncludeProperties` and added support for `ExcludeProperties` in all use cases.
+
+## 1.1.2
 * Added support for the [Options pattern](https://learn.microsoft.com/en-my/dotnet/core/extensions/options)
 ([#14](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/14))
 
