@@ -26,7 +26,8 @@ Example XML config:
         servicename="TestService"
         scheduledDelayMilliseconds="1000"
         useDefaultResources="false"
-        includeFormattedMessage="true">
+        includeFormattedMessage="true"
+        onlyIncldueParameters="correlationId,messageId">
           <attribute name="thread.id" layout="${threadid}" />
           <resource name="process.name" layout="${processname}" />
           <resource name="process.id" layout="${processid}" />
@@ -66,6 +67,9 @@ If you aren't doing structured logging, leave this as false.
 - **ResolveOptionsFromName** : Allows you to use the [Options pattern](https://learn.microsoft.com/en-my/dotnet/core/extensions/options) to initialize the target using 
  an instance of `OtlpExporterOptions` defined in appsettings.json. If the setting is not empty, NLog will try to resolve `OtlpExporterOptions` from the name given by this setting
  and `UseHttp`, `Endpoint` and `Headers` will be ignored. For an example, see the `TestWebApp` project.
+- **ExcludeProperties** : A list of log event properties which won't be added to the final log as attributes. By default empty, meaning that no log event properties will be excluded.
+- **OnlyIncludeProperties** : A list of log event properties which will be the only ones to be included in the final log. If both this and `ExcludeProperties` are defined,
+ this setting will take precedence and `ExcludeProperties` will be ignored.
 
 
 
