@@ -1,6 +1,6 @@
 ﻿# Changelog
 
-## Unreleased
+## 1.1.3
 * Added a new property `OnlyIncludeProperties` and added support for `ExcludeProperties` in all use cases.
 
 ## 1.1.2
