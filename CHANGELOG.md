@@ -1,7 +1,11 @@
 ﻿# Changelog
 
+## 1.1.4
+* Added a warning to README ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/f2ed0e0721e9b6575d9754232e7554e285cc2a5c))
+* Upgraded OpenTelemetry packages ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/8bde762ae1077dc9e5e998366097a2ae6a8a9f3b))
+
 ## 1.1.3
-* Added a new property `OnlyIncludeProperties` and added support for `ExcludeProperties` in all use cases.
+* Added a new property `OnlyIncludeProperties` and added support for `ExcludeProperties` in all use cases. ([#15](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/15))
 
 ## 1.1.2
 * Added support for the [Options pattern](https://learn.microsoft.com/en-my/dotnet/core/extensions/options)
