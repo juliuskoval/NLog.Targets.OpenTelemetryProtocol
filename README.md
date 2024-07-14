@@ -45,10 +45,10 @@ Example XML config:
 ### Configuration parameters
 
 - **Endpoint** : Determines where the exporter should send logs. Used to set OtlpExporterOptions.Endpoint. When not specified it will use environment-variable: `OTEL_EXPORTER_OTLP_ENDPOINT`
-- **UseHttp** : Determines whether logs are exported using gRPC or HTTP. (optional). When not specified it will use environment-variable: `OTEL_EXPORTER_OTLP_PROTOCOL`
+- **UseHttp** : Determines whether logs are exported using gRPC or HTTP. (optional). By default false, where protocol is determined by environment-variable: `OTEL_EXPORTER_OTLP_PROTOCOL`
 - **Headers** : Used to set OtlpExporterOptions.Headers (optional). When not specified it will use environment-variable: `OTEL_EXPORTER_OTLP_HEADERS`
 - **ServiceName** : Used to set the service.name resource (optional). When not specified it will use environment-variable: `OTEL_SERVICE_NAME`
-- **UseDefaultResources** : Exclude default ressource like: telemetry.sdk.name, telemetry.sdk.language and telemetry.sdk.version. When not specified it will use environment-variable: `OTEL_RESOURCE_ATTRIBUTES`
+- **UseDefaultResources** : Use default resources like: telemetry.sdk.name, telemetry.sdk.language and telemetry.sdk.version. By default true, where resources are determined by environment-variable: `OTEL_RESOURCE_ATTRIBUTES`
 - **Resource** : Additional resources to include in the ResourceBuilder (optional)
   - _Name_ : Name of Resource.
   - _Layout_ : Value of Resource (Will only resolve value at target initialize)
