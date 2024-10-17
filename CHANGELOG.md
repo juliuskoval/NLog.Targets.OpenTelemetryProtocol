@@ -1,5 +1,8 @@
 ﻿# Changelog
 
+## 1.1.5
+* Upgraded OpenTelemetry packages to version 1.10.0-beta.1 ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/03d9ca170a5c5e3b691497ed9458c7ea89004c91))
+
 ## 1.1.4
 * Added a warning to README ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/f2ed0e0721e9b6575d9754232e7554e285cc2a5c))
 * Upgraded OpenTelemetry packages ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/8bde762ae1077dc9e5e998366097a2ae6a8a9f3b))
