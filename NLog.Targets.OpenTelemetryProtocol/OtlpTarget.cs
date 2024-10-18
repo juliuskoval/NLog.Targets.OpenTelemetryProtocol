@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.Globalization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,6 +24,8 @@ namespace NLog.Targets
         private LoggerProvider _loggerProvider;
 
         private BatchLogRecordExportProcessor _processor;
+
+        private OpenTelemetryEventListener _internalLoggerEventListener;
 
         private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
         private readonly object _sync = new object();
@@ -62,6 +65,8 @@ namespace NLog.Targets
         [ArrayParameter(typeof(TargetPropertyWithContext), "attribute")]
         public IList<TargetPropertyWithContext> Attributes => ContextProperties;
 
+        public bool DisableEventListener { get; set; }
+
         public OtlpTarget()
         {
             Layout = "${message}";
@@ -71,6 +76,13 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
+            var internalLoggerLevel = ResolveInternalLoggerLevel();
+            if (internalLoggerLevel.HasValue && !DisableEventListener)
+            {
+                OpenTelemetryEventListener.EventLevel = internalLoggerLevel.Value;
+                _internalLoggerEventListener = new OpenTelemetryEventListener(this);
+            }
+
 #if TEST
             LogRecords = new List<LogRecord>();
 #endif
@@ -93,8 +105,24 @@ namespace NLog.Targets
                 .AddInMemoryExporter(LogRecords)
 #endif
                 .Build();
-            
+
             base.InitializeTarget();
+        }
+
+        private static EventLevel? ResolveInternalLoggerLevel()
+        {
+            if (InternalLogger.IsDebugEnabled)
+                return EventLevel.Verbose;
+            else if (InternalLogger.IsInfoEnabled)
+                return EventLevel.Informational;
+            else if (InternalLogger.IsWarnEnabled)
+                return EventLevel.Warning;
+            else if (InternalLogger.IsErrorEnabled)
+                return EventLevel.Error;
+            else if (InternalLogger.IsFatalEnabled)
+                return EventLevel.Critical;
+            else
+                return default(EventLevel?);
         }
 
         private OtlpExporterOptions ResolveOtlpExporterOptionsFromName()
@@ -197,6 +225,8 @@ namespace NLog.Targets
             var result = processor?.Shutdown(1000) ?? true;
             if (!result)
                 InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
+
+            _internalLoggerEventListener?.Dispose();
 
             base.CloseTarget();
         }
