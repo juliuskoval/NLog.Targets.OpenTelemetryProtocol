@@ -1,5 +1,8 @@
 ﻿# Changelog
 
+## 1.1.6
+* The OpenTelemetry event source will log messages using NLog's internal logger. ([#19](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/19))
+
 ## 1.1.5
 * Upgraded OpenTelemetry packages to version 1.10.0-beta.1 ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/03d9ca170a5c5e3b691497ed9458c7ea89004c91))
 
