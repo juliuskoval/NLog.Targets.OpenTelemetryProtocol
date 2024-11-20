@@ -167,6 +167,7 @@ namespace NLog.Targets
         {
             try
             {
+                InternalLogger.Info("OtlpTarget(Name={0}) - Creating LogExporter with Protocol={1} to EndPoint={2}", Name, options.Protocol, options.Endpoint);
                 BaseExporter<LogRecord> otlpExporter = new OtlpLogExporter(options);
                 return new BatchLogRecordExportProcessor(
                     otlpExporter,
