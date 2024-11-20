@@ -70,3 +70,4 @@ If you aren't doing structured logging, leave this as false.
 - **ExcludeProperties** : A list of log event properties which won't be added to the final log as attributes. By default empty, meaning that no log event properties will be excluded.
 - **OnlyIncludeProperties** : A list of log event properties which will be the only ones to be included in the final log. If both this and `ExcludeProperties` are defined,
  this setting will take precedence and `ExcludeProperties` will be ignored.
+- **DisableEventListener** : Disable dynamic configuration of Event Tracing (ETW) listener for detailed NLog InternalLogger output.
