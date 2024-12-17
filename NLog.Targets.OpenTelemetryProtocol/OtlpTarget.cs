@@ -49,6 +49,10 @@ namespace NLog.Targets
 
         public Layout ServiceName { get; set; }
 
+        public Layout TraceId { get; set; } = Layout.FromMethod(evt => System.Diagnostics.Activity.Current?.GetTraceId());
+
+        public Layout SpanId { get; set; } = Layout.FromMethod(evt => System.Diagnostics.Activity.Current?.GetSpanId());
+
         public Layout<int> ScheduledDelayMilliseconds { get; set; } = 5000;
 
         public Layout<int> MaxQueueSize { get; set; } = 2048;
@@ -246,6 +250,13 @@ namespace NLog.Targets
                 Timestamp = logEvent.TimeStamp,
             };
 
+            var spanId = RenderLogEvent(SpanId, logEvent);
+            if (!string.IsNullOrEmpty(spanId))
+                data.SpanId = System.Diagnostics.ActivitySpanId.CreateFromString(spanId.AsSpan());
+            var traceId = RenderLogEvent(TraceId, logEvent);
+            if (!string.IsNullOrEmpty(traceId))
+                data.TraceId = System.Diagnostics.ActivityTraceId.CreateFromString(traceId.AsSpan());
+
             if (IncludeFormattedMessage && (logEvent.Parameters?.Length > 0 || logEvent.HasProperties))
             {
                 var formattedMessage = RenderLogEvent(Layout, logEvent);
@@ -353,7 +364,7 @@ namespace NLog.Targets
 
         private OpenTelemetry.Logs.Logger GetLogger(string name)
         {
-            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger? logger))
+            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger logger))
             {
                 lock (_sync)
                 {
