@@ -6,8 +6,8 @@ This target can export logs in the format defined in the OpenTelemetry specifica
 For an explanation of the log data model, see https://opentelemetry.io/docs/specs/otel/logs/data-model/. <br>
 For an example, see https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/#examples.
 
-**Note that the OpenTelemetry logging API is still unfinished, which means that it is internal in stable releases and public in prelease versions of the OpenTelemetry package.
-This package has a reference to OpenTelemetry version 1.9.0-alpha.1. If your project has a reference to a stable version higher than that,
+**Note that the OpenTelemetry logging API is still unfinished, which means that it is internal in stable releases and public in pre-release versions of the OpenTelemetry package.
+This package has a reference to pre-release version of the OpenTelemetry-nuget-package. If your project has a reference to a stable version higher than that,
 you will get a runtime error.**
 
 ## Configuration
@@ -29,7 +29,7 @@ Example XML config:
         scheduledDelayMilliseconds="1000"
         useDefaultResources="false"
         includeFormattedMessage="true"
-        onlyIncldueParameters="correlationId,messageId">
+        onlyIncludeProperties="correlationId,messageId">
           <attribute name="thread.id" layout="${threadid}" />
           <resource name="process.name" layout="${processname}" />
           <resource name="process.id" layout="${processid}" />
@@ -55,6 +55,8 @@ Example XML config:
 - **Attribute** : Attributes to be included with each LogEvent (optional)
   - _Name_ : Name of Attribute.
   - _Layout_ : Value of Attribute (If value is the same for all LogEvents, then add as resource instead)
+- **SpanId** : Capture the SpanId value from System.Diagnostics.Activity.Current. Assign to empty value to skip SpanId.
+- **TraceId** : Capture the TraceId value from System.Diagnostics.Activity.Current. Assign to empty value to skip TraceId.
 - **MaxQueueSize** : The target uses a batch exporter, this defines the max queue size. By default 2048, optional.
 - **MaxExportBatchSize** : The target uses a batch exporter, this defines the max batch size. By default 512, optional.
 - **ScheduledDelayMilliseconds** : The target uses a batch exporter, this defines how often it is flushed in milliseconds. By default 5000, optional.
