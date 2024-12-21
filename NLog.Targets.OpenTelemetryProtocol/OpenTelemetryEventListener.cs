@@ -30,7 +30,7 @@ namespace NLog.Targets.OpenTelemetryProtocol
             }
         }
 
-        private void WriteEvent(EventLevel eventLevel, string? eventMessage, IReadOnlyList<object> payload)
+        private void WriteEvent(EventLevel eventLevel, string eventMessage, IReadOnlyList<object> payload)
         {
             switch (eventLevel)
             {

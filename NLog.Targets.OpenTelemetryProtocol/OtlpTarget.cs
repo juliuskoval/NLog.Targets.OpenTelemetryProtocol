@@ -353,7 +353,7 @@ namespace NLog.Targets
 
         private OpenTelemetry.Logs.Logger GetLogger(string name)
         {
-            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger? logger))
+            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger logger))
             {
                 lock (_sync)
                 {

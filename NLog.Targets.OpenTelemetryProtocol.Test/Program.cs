@@ -11,6 +11,8 @@ namespace NLog.Targets.OpenTelemetryProtocol.Test
 
             var message = "testing";
 
+            using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
+
             logger.Fatal("message: {messageField}", message);
 
             Thread.Sleep(10000);

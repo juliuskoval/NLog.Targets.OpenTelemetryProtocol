@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-    <PropertyGroup>
-        <OutputType>Exe</OutputType>
-        <TargetFramework>net6.0</TargetFramework>
-		<LangVersion>Latest</LangVersion>
-		<Configurations>Debug;Release;Test;Test</Configurations>
-    </PropertyGroup>
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>Latest</LangVersion>
+    <Configurations>Debug;Release;Test</Configurations>
+  </PropertyGroup>
 
-    <ItemGroup>
-      <ProjectReference Include="..\NLog.Targets.OpenTelemetryProtocol\NLog.Targets.OpenTelemetryProtocol.csproj" />
-    </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\NLog.Targets.OpenTelemetryProtocol\NLog.Targets.OpenTelemetryProtocol.csproj" />
+  </ItemGroup>
 
-    <ItemGroup>
-      <None Update="nlog.config">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
-    </ItemGroup>
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
