@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## 1.1.7
+* Updated dependencies. ([#22](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/22))
+* Added logging. ([#21](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/21))
+
 ## 1.1.6
 * The OpenTelemetry event source will log messages using NLog's internal logger. ([#19](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/19))
 
