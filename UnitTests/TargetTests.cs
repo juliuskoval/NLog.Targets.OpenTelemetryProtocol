@@ -300,6 +300,8 @@ public class TargetTests
     }
     #endregion
 
+    #region PropertyExclusion
+
     [Fact]
     public void ExludeProperties()
     {
@@ -483,6 +485,34 @@ public class TargetTests
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    #endregion
+
+    [Fact]
+    public void ActivityContextIsPopulated()
+    {
+        LogManager.LoadConfiguration("nlog.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message";
+
+        using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
+
+        logger.Info(message);
+
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+
+        Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
+        Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
+    }
+
+    private string ByteStringToHexString(Google.Protobuf.ByteString str)
+    {
+        return BitConverter.ToString(str.ToByteArray()).Replace("-", "").ToLower();
     }
 
     private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)

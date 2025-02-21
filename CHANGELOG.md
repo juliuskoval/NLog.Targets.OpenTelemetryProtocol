@@ -1,6 +1,7 @@
 ﻿# Changelog
 
 * Fixed unit tests which were broken by the introduction of a custom protobuf serializer in the OTLP Exporter library.
+* Added a unit test to make sure that traceId and spanId are populated correctly.
 
 ## 1.1.7
 * Updated dependencies. ([#22](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/22))
