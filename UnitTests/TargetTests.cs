@@ -1,12 +1,16 @@
 using NLog;
 using NLog.Targets;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
+using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
+using OpenTelemetry.Logs;
+using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 
 namespace UnitTests;
 
 public class TargetTests
 {
     private const string OriginalFormat = "{OriginalFormat}";
+    private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
 #if TEST
 
@@ -32,13 +36,10 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new (), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 2);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
@@ -71,13 +72,10 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 2);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
@@ -108,12 +106,10 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 0);
+        Assert.True(otlpLogRecord.Attributes.Count() == 0);
     }
 
     [Fact]
@@ -138,12 +134,10 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 2);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
@@ -177,9 +171,7 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -212,9 +204,7 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -245,9 +235,7 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -274,9 +262,7 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -307,10 +293,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -337,10 +320,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -371,13 +351,10 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 2);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
@@ -409,10 +386,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -438,10 +412,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -473,12 +444,10 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
-        Assert.True(otlpLogRecord.Attributes.Count == 2);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
         var attribute = otlpLogRecord.Attributes[index];
@@ -510,13 +479,19 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        var otlpLogRecordTransformer = new OtlpLogRecordTransformer(new(), new());
-
-        var otlpLogRecord = otlpLogRecordTransformer.ToOtlpLog(target.LogRecords[0]);
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    private static OtlpLogs.LogRecord? ToOtlpLogs(SdkLimitOptions sdkOptions, ExperimentalOptions experimentalOptions, LogRecord logRecord)
+    {
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpLogSerializer.WriteLogRecord(buffer, 0, sdkOptions, experimentalOptions, logRecord);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var scopeLogs = OtlpLogs.ScopeLogs.Parser.ParseFrom(stream);
+        return scopeLogs.LogRecords.FirstOrDefault();
     }
 
 #endif

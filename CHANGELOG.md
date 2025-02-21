@@ -1,5 +1,7 @@
 ﻿# Changelog
 
+* Fixed unit tests which were broken by the introduction of a custom protobuf serializer in the OTLP Exporter library.
+
 ## 1.1.7
 * Updated dependencies. ([#22](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/22))
 * Added logging. ([#21](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/21))
