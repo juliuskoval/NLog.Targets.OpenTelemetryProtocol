@@ -18,6 +18,13 @@ public class Logging
     }
 
     [Benchmark]
+    public void LogWithActivity()
+    {
+        using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
+        _logger.Info("message");
+    }
+
+    [Benchmark]
     public void Log1()
     {
         _logger.Info("{first}", "message");
