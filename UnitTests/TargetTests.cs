@@ -503,7 +503,33 @@ public class TargetTests
         using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
 
         logger.Info(message);
+        Assert.False(target.IsWrapped);
 
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+
+        Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
+        Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
+    }
+
+    [Fact]
+    public void ActivityContextIsPopulatedIfAsync()
+    {
+        LogManager.LoadConfiguration("nlog2.config");
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message";
+
+        using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
+
+        logger.Info(message);
+
+        Thread.Sleep(10000);
+
+        Assert.True(target.IsWrapped);
+        Assert.Single(target.LogRecords);
         OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
