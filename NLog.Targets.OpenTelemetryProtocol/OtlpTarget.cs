@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -11,6 +12,7 @@ using NLog.Config;
 using NLog.Layouts;
 using NLog.Targets.OpenTelemetryProtocol;
 using NLog.Targets.OpenTelemetryProtocol.Exceptions;
+using NLog.Targets.Wrappers;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
@@ -29,6 +31,7 @@ namespace NLog.Targets
 
         private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
         private readonly object _sync = new object();
+        private readonly object _sync2 = new object();
 
         private const string OriginalFormatName = "{OriginalFormat}";
 
@@ -66,6 +69,30 @@ namespace NLog.Targets
         public IList<TargetPropertyWithContext> Attributes => ContextProperties;
 
         public bool DisableEventListener { get; set; }
+
+        public Layout TraceId { get; set; } = Layout.FromMethod(evt => System.Diagnostics.Activity.Current?.GetTraceId());
+
+        public Layout SpanId { get; set; } = Layout.FromMethod(evt => System.Diagnostics.Activity.Current?.GetSpanId());
+
+        private bool _checked = false;
+        private bool _isWrapped;
+
+        public bool IsWrapped
+        {
+            get
+            {
+                lock (_sync2)
+                {
+                    if (!_checked)
+                    {
+                        _checked = true;
+                        _isWrapped = LogManager.Configuration.AllTargets.Where(t => t is AsyncTargetWrapper).ToArray().Cast<AsyncTargetWrapper>().Any(x => x.WrappedTarget == this);
+                    }
+
+                    return _isWrapped;
+                }
+            }
+        }
 
         public OtlpTarget()
         {
@@ -245,6 +272,16 @@ namespace NLog.Targets
                 Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
             };
+
+            if (IsWrapped)
+            {
+                var spanId = RenderLogEvent(SpanId, logEvent);
+                if (!string.IsNullOrEmpty(spanId))
+                    data.SpanId = System.Diagnostics.ActivitySpanId.CreateFromString(spanId.AsSpan());
+                var traceId = RenderLogEvent(TraceId, logEvent);
+                if (!string.IsNullOrEmpty(traceId))
+                    data.TraceId = System.Diagnostics.ActivityTraceId.CreateFromString(traceId.AsSpan());
+            }
 
             if (IncludeFormattedMessage && (logEvent.Parameters?.Length > 0 || logEvent.HasProperties))
             {
