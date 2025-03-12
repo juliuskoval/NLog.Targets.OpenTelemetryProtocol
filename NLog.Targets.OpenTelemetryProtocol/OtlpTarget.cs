@@ -59,6 +59,10 @@ namespace NLog.Targets
 
         public HashSet<string> OnlyIncludeProperties { get; set; }
 
+        public Layout<System.Diagnostics.ActivityTraceId?> TraceId { get; set; } = Layout<System.Diagnostics.ActivityTraceId?>.FromMethod(evt => System.Diagnostics.Activity.Current?.TraceId);
+
+        public Layout<System.Diagnostics.ActivitySpanId?> SpanId { get; set; } = Layout<System.Diagnostics.ActivitySpanId?>.FromMethod(evt => System.Diagnostics.Activity.Current?.SpanId);
+
         [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
         public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
 
@@ -245,6 +249,13 @@ namespace NLog.Targets
                 Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
             };
+
+            var spanId = RenderLogEvent(SpanId, logEvent);
+            if (spanId.HasValue)
+                data.SpanId = spanId.Value;
+            var traceId = RenderLogEvent(TraceId, logEvent);
+            if (traceId.HasValue)
+                data.TraceId = traceId.Value;
 
             if (IncludeFormattedMessage && (logEvent.Parameters?.Length > 0 || logEvent.HasProperties))
             {
