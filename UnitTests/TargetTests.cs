@@ -19,7 +19,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -54,7 +54,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithPropertiesAndParameters()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -90,7 +90,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithoutProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -115,7 +115,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageAndIncludeParameters()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -152,7 +152,7 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageAndDontIncludeParameters()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -187,7 +187,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -219,7 +219,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -244,7 +244,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithParameters()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -276,7 +276,7 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutParameters()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -305,7 +305,7 @@ public class TargetTests
     [Fact]
     public void ExludeProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -336,7 +336,7 @@ public class TargetTests
     [Fact]
     public void ExcludeNonExistentProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -371,7 +371,7 @@ public class TargetTests
     [Fact]
     public void ExcludeAllProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -397,7 +397,7 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -428,7 +428,7 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeAllProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -464,7 +464,7 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeNonExistentProperties()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -492,7 +492,7 @@ public class TargetTests
     [Fact]
     public void ActivityContextIsPopulated()
     {
-        LogManager.LoadConfiguration("nlog.config");
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
@@ -504,6 +504,29 @@ public class TargetTests
 
         logger.Info(message);
 
+        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+
+        Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
+        Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
+    }
+
+    [Fact]
+    public void ActivityContextIsPopulatedIfAsync()
+    {
+        LogManager.Setup().LoadConfigurationFromFile("nlog2.config", optional: false);
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message";
+
+        using var currentActivity = new System.Diagnostics.Activity("Hello World").Start();
+
+        logger.Info(message);
+        LogManager.Flush();
+
+        Assert.Single(target.LogRecords);
         OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
