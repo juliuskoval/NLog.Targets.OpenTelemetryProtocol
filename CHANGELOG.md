@@ -1,7 +1,12 @@
 ﻿# Changelog
 
 * Fixed unit tests which were broken by the introduction of a custom protobuf serializer in the OTLP Exporter library.
+([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/cc390a3343e81f69143b351a069c20ba21c2b062))
 * Added a unit test to make sure that traceId and spanId are populated correctly.
+([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/1bf62becff8abc81c880ed38e356a8c7d0e14d7b))
+* Added a benchmark ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/67c219726a9c1aa80471c4d361189d6c0520f00b))
+* Fixed a bug which caused spanId and traceId to not be poopulated correctly when the target was wrapped in an async wrapper
+and updated NLog to version 5.3.4. ([#27](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/27))
 
 ## 1.1.7
 * Updated dependencies. ([#22](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/22))
