@@ -36,7 +36,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -72,7 +72,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -99,14 +99,11 @@ public class TargetTests
         LogManager.ReconfigExistingLoggers();
 
         var message = "message without parameters";
-
-
         logger.Info(message);
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 0);
@@ -128,13 +125,11 @@ public class TargetTests
         var parameter = "testing";
         var expectedMessage = "message : testing";
 
-
         logger.Info(message, parameter);
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -170,8 +165,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -203,8 +197,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -234,8 +227,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -261,8 +253,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -293,7 +284,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -322,7 +313,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -353,7 +344,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -388,7 +379,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -414,7 +405,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -446,7 +437,7 @@ public class TargetTests
         Assert.Single(target.LogRecords);
 
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -481,7 +472,7 @@ public class TargetTests
 
         Assert.Single(target.LogRecords);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -504,7 +495,7 @@ public class TargetTests
 
         logger.Info(message);
 
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
@@ -527,7 +518,7 @@ public class TargetTests
         LogManager.Flush();
 
         Assert.Single(target.LogRecords);
-        OtlpLogs.LogRecord? otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0]);
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
