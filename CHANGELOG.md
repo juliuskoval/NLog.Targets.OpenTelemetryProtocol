@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+# 1.1.9
+
+* Added netstandard2.1 to TargetFrameworks ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/56308607102926d97fb84a9706e40b27c6873ebe))
+* Avoid empty TraceId / SpanId ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/0ac72895b2b9dc23b9ccba7dcf8550054ec34e0b))
+
+
+# 1.1.8
+
 * Fixed unit tests which were broken by the introduction of a custom protobuf serializer in the OTLP Exporter library.
 ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/cc390a3343e81f69143b351a069c20ba21c2b062))
 * Added a unit test to make sure that traceId and spanId are populated correctly.
