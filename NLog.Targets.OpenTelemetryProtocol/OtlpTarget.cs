@@ -21,8 +21,8 @@ namespace NLog.Targets
     [Target("OtlpTarget")]
     public class OtlpTarget : TargetWithContext
     {
-        private static readonly System.Diagnostics.ActivitySpanId EmptySpanId = default(System.Diagnostics.ActivitySpanId);
-        private static readonly System.Diagnostics.ActivityTraceId EmptyTraceId = default(System.Diagnostics.ActivityTraceId);
+        private static readonly string EmptyTraceIdToHexString = default(System.Diagnostics.ActivityTraceId).ToHexString();
+        private static readonly string EmptySpanIdToHexString = default(System.Diagnostics.ActivitySpanId).ToHexString();
 
         private LoggerProvider _loggerProvider;
 
@@ -62,9 +62,9 @@ namespace NLog.Targets
 
         public HashSet<string> OnlyIncludeProperties { get; set; }
 
-        public Layout<System.Diagnostics.ActivityTraceId?> TraceId { get; set; } = Layout<System.Diagnostics.ActivityTraceId?>.FromMethod(static evt => System.Diagnostics.Activity.Current?.TraceId is System.Diagnostics.ActivityTraceId activityTraceId && !activityTraceId.Equals(EmptyTraceId) ? activityTraceId : null);
+        public Layout<System.Diagnostics.ActivityTraceId?> TraceId { get; set; } = Layout<System.Diagnostics.ActivityTraceId?>.FromMethod(static evt => System.Diagnostics.Activity.Current?.TraceId is System.Diagnostics.ActivityTraceId activityTraceId && !ReferenceEquals(EmptyTraceIdToHexString, activityTraceId.ToHexString()) ? activityTraceId : null);
 
-        public Layout<System.Diagnostics.ActivitySpanId?> SpanId { get; set; } = Layout<System.Diagnostics.ActivitySpanId?>.FromMethod(static evt => System.Diagnostics.Activity.Current?.SpanId is System.Diagnostics.ActivitySpanId activitySpanId && !activitySpanId.Equals(EmptySpanId) ? activitySpanId : null);
+        public Layout<System.Diagnostics.ActivitySpanId?> SpanId { get; set; } = Layout<System.Diagnostics.ActivitySpanId?>.FromMethod(static evt => System.Diagnostics.Activity.Current?.SpanId is System.Diagnostics.ActivitySpanId activitySpanId && !ReferenceEquals(EmptySpanIdToHexString, activitySpanId.ToHexString()) ? activitySpanId : null);
 
         [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
         public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
