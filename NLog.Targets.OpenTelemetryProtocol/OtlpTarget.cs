@@ -74,6 +74,14 @@ namespace NLog.Targets
 
         public bool DisableEventListener { get; set; }
 
+        /// <summary>
+        /// Resolve shared OpenTelemetry LoggerProvider using application dependency injection. By default <c>null</c>
+        /// <para><c>null</c> - Attempt to resolve shared OpenTelemetry LoggerProvider dependency, with fallback to own dedicated LoggerProvider.</para>
+        /// <para><c>true</c> - Resolve shared OpenTelemetry LoggerProvider dependency, with fallback to disabling target until dependency is available.</para>
+        /// <para><c>false</c> - Always create own dedicated OpenTelemetry LoggerProvider.</para>
+        /// </summary>
+        public bool? ResolveLoggerProvider { get; set; }
+
         public OtlpTarget()
         {
             Layout = "${message}";
@@ -90,6 +98,33 @@ namespace NLog.Targets
                 _internalLoggerEventListener = new OpenTelemetryEventListener(this);
             }
 
+            _loggerProvider = ResolveOtlpLoggerProvider();
+
+            base.InitializeTarget();
+        }
+
+        private LoggerProvider ResolveOtlpLoggerProvider()
+        {
+            try
+            {
+                if (ResolveLoggerProvider ?? true)
+                {
+                    // Attempt to resolve shared OpenTelemetry LoggerProvider, that is used by the entire application
+                    var loggerProvider = this.ResolveService<LoggerProvider>();
+                    InternalLogger.Info("{0}: Resolved shared OpenTelemetry LoggerProvider dependency", this);
+                    return loggerProvider;
+                }
+            }
+            catch (NLogDependencyResolveException ex)
+            {
+                // Initializing NLog LoggingConfiguration before having 
+                InternalLogger.Info("{0}: Could not resolve shared OpenTelemetry LoggerProvider dependency: {1}", this, ex.Message);
+                if (ResolveLoggerProvider == true)
+                    throw;  // Throwing NLogDependencyResolveException will make NLog retry initialization when dependency is available
+            }
+
+            InternalLogger.Info("{0}: Building own dedicated OpenTelemetry LoggerProvider", this);
+
 #if TEST
             LogRecords = new List<LogRecord>();
 #endif
@@ -102,9 +137,8 @@ namespace NLog.Targets
 
             _processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
-            
-            _loggerProvider = Sdk
-                .CreateLoggerProviderBuilder()
+
+            return Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
                 .AddProcessor(_processor)
@@ -112,8 +146,6 @@ namespace NLog.Targets
                 .AddInMemoryExporter(LogRecords)
 #endif
                 .Build();
-
-            base.InitializeTarget();
         }
 
         private static EventLevel? ResolveInternalLoggerLevel()
@@ -225,16 +257,23 @@ namespace NLog.Targets
         {
             var logProvider = _loggerProvider;
             _loggerProvider = null;
-            logProvider?.Dispose();
-            _loggers.Clear();
-
             var processor = _processor;
             _processor = null;
-            var result = processor?.Shutdown(1000) ?? true;
-            if (!result)
-                InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
 
-            _internalLoggerEventListener?.Dispose();
+            try
+            {
+                if (processor != null)
+                    logProvider?.Dispose(); // Dedicated LoggerProvider, so have ownership
+
+                var result = processor?.Shutdown(1000) ?? true;
+                if (!result)
+                    InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
+            }
+            finally
+            {
+                _loggers.Clear();
+                _internalLoggerEventListener?.Dispose();
+            }
 
             base.CloseTarget();
         }

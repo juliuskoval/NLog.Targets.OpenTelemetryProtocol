@@ -70,4 +70,8 @@ If you aren't doing structured logging, leave this as false.
 - **ExcludeProperties** : A list of log event properties which won't be added to the final log as attributes. By default empty, meaning that no log event properties will be excluded.
 - **OnlyIncludeProperties** : A list of log event properties which will be the only ones to be included in the final log. If both this and `ExcludeProperties` are defined,
  this setting will take precedence and `ExcludeProperties` will be ignored.
-- **DisableEventListener** : Disable dynamic configuration of Event Tracing (ETW) listener for detailed NLog InternalLogger output.
+- **resolveLoggerProvider** : Resolve shared OpenTelemetry LoggerProvider using application dependency injection. By default `null`
+  - `null` - Attempt to resolve shared OpenTelemetry LoggerProvider dependency, with fallback to own dedicated LoggerProvider.
+  - `true` - Resolve shared OpenTelemetry LoggerProvider dependency, with fallback to disabling target until dependency is available.
+  - `false` - Always create own dedicated OpenTelemetry LoggerProvider.
+- **DisableEventListener** : Disable dynamic configuration of Event Tracing (ETW) listener for detailed NLog InternalLogger output. By default false, optional.
