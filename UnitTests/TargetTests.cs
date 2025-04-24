@@ -480,6 +480,8 @@ public class TargetTests
 
     #endregion
 
+    #region ActivityContext
+
     [Fact]
     public void ActivityContextIsPopulated()
     {
@@ -523,6 +525,8 @@ public class TargetTests
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
     }
+
+    #endregion
 
     private string ByteStringToHexString(Google.Protobuf.ByteString str)
     {
