@@ -10,6 +10,8 @@ namespace UnitTests;
 public class TargetTests
 {
     private const string OriginalFormat = "{OriginalFormat}";
+    private const string CustomLayout = "${logger}: ${message}";
+
     private static readonly SdkLimitOptions DefaultSdkLimitOptions = new();
 
 #if TEST
@@ -109,8 +111,10 @@ public class TargetTests
         Assert.True(otlpLogRecord.Attributes.Count() == 0);
     }
 
-    [Fact]
-    public void IncludeFormattedMessageAndIncludeParameters()
+    [Theory]
+    [InlineData(null)]
+    [InlineData(CustomLayout)]
+    public void IncludeFormattedMessageAndIncludeParameters(string? layout)
     {
         LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
@@ -118,6 +122,7 @@ public class TargetTests
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
         target.IncludeEventParameters = true;
+        target.Layout = layout ?? target.Layout;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
 
@@ -131,7 +136,11 @@ public class TargetTests
 
         OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
 
-        Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
+        if (layout is null)
+            Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
+        else
+            Assert.Equal($"{logger.Name}: {expectedMessage}", otlpLogRecord.Body.StringValue);
+
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
 
         var index = 0;
@@ -214,15 +223,18 @@ public class TargetTests
     }
     #endregion
 
-    #region DontIncldueFormattedMessage
-    [Fact]
-    public void DontIncludeFormattedMessageWithProperties()
+    #region DontIncludeFormattedMessage
+    [Theory]
+    [InlineData(null)]
+    [InlineData(CustomLayout)]
+    public void DontIncludeFormattedMessageWithProperties(string? layout)
     {
         LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = false;
+        target.Layout = layout ?? target.Layout;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
 
