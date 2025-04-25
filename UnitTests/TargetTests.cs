@@ -152,7 +152,6 @@ public class TargetTests
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
         target.IncludeFormattedMessage = true;
-        target.IncludeEventParameters = false;
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
 
@@ -174,6 +173,44 @@ public class TargetTests
         var attribute = otlpLogRecord.Attributes[index];
         Assert.Equal(OriginalFormat, attribute.Key);
         Assert.Equal(message, attribute.Value.StringValue);
+    }
+
+    [Fact]
+    public void IncludeFormattedMessageWithCustomMessageTemplateAttribute()
+    {
+        var templateString = "templateString";
+
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
+        target.IncludeFormattedMessage = true;
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {field}";
+        var parameter = "testing";
+        var expectedMessage = "message : \"testing\"";
+
+
+        logger.Info(message, parameter);
+
+        Assert.Single(target.LogRecords);
+
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+
+        Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
+        Assert.True(otlpLogRecord.Attributes.Count() == 2);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal(templateString, attribute.Key);
+        Assert.Equal(message, attribute.Value.StringValue);
+
+        attribute = otlpLogRecord.Attributes[++index];
+        Assert.Equal("field", attribute.Key);
+        Assert.Equal(parameter, attribute.Value.StringValue);
     }
     #endregion
 
@@ -288,6 +325,39 @@ public class TargetTests
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    [Fact]
+    public void DontIncludeFormattedMessageWithCustomMessageTemplateAttribute()
+    {
+        var templateString = "templateString";
+
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
+        target.IncludeFormattedMessage = false;
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {field}";
+        var parameter = "testing";
+
+
+        logger.Info(message, parameter);
+
+        Assert.Single(target.LogRecords);
+
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+
+        Assert.Single(otlpLogRecord.Attributes);
+        Assert.Equal(message, otlpLogRecord.Body.StringValue);
+
+        var index = 0;
+        var attribute = otlpLogRecord.Attributes[index];
+        Assert.Equal("field", attribute.Key);
+        Assert.Equal(parameter, attribute.Value.StringValue);
     }
     #endregion
 

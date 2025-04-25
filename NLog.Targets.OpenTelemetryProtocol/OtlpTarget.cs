@@ -33,7 +33,11 @@ namespace NLog.Targets
         private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
         private readonly object _sync = new object();
 
-        private const string OriginalFormatName = "{OriginalFormat}";
+        private const string DefaultMessageTemplateAttribute = "{OriginalFormat}";
+
+        private string _messageTemplateString;
+
+        public Layout<string> MessageTemplateAttribute { get; set; }
 
 #if TEST
         public List<LogRecord> LogRecords;
@@ -86,11 +90,13 @@ namespace NLog.Targets
         {
             Layout = "${message}";
             IncludeEventProperties = true;
-            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);           
         }
 
         protected override void InitializeTarget()
         {
+            _messageTemplateString = RenderLogEvent(MessageTemplateAttribute, LogEventInfo.CreateNullEvent(), DefaultMessageTemplateAttribute);
+
             var internalLoggerLevel = ResolveInternalLoggerLevel();
             if (internalLoggerLevel.HasValue && !DisableEventListener)
             {
@@ -140,7 +146,7 @@ namespace NLog.Targets
 
             return Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
-                .AddProcessor(new LogRecordProcessor(IncludeFormattedMessage))
+                .AddProcessor(new LogRecordProcessor())
                 .AddProcessor(_processor)
 #if TEST
                 .AddInMemoryExporter(LogRecords)
@@ -299,21 +305,25 @@ namespace NLog.Targets
             if (traceId.HasValue)
                 data.TraceId = traceId.Value;
 
+            var attributes = new LogRecordAttributeList();
+
             if (IncludeFormattedMessage && (logEvent.Parameters?.Length > 0 || logEvent.HasProperties))
             {
                 var formattedMessage = RenderLogEvent(Layout, logEvent);
                 data.Body = formattedMessage;
+                attributes.Add(_messageTemplateString, logEvent.Message ?? string.Empty);
             }
-
-            var attributes = new LogRecordAttributeList();
+            else
+            {
+                data.Body = logEvent.Message;
+            }
+            
             AppendAttributes(logEvent, ref attributes);
             GetLogger(logEvent.LoggerName).EmitLog(data, attributes);
         }
 
         private void AppendAttributes(LogEventInfo logEvent, ref LogRecordAttributeList attributes)
         {
-            attributes.Add(OriginalFormatName, logEvent.Message ?? string.Empty);
-
             if (logEvent.Exception != null)
                 attributes.RecordException(logEvent.Exception);
 

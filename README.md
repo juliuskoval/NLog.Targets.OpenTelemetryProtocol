@@ -75,3 +75,4 @@ If you aren't doing structured logging, leave this as false.
   - `true` - Resolve shared OpenTelemetry LoggerProvider dependency, with fallback to disabling target until dependency is available.
   - `false` - Always create own dedicated OpenTelemetry LoggerProvider.
 - **DisableEventListener** : Disable dynamic configuration of Event Tracing (ETW) listener for detailed NLog InternalLogger output. By default false, optional.
+- **MessageTemplateAttribute** : The name of the attribute which contains the message template. By default `{OriginalFormat}`, optional.
