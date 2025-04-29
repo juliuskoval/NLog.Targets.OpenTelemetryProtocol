@@ -1,5 +1,13 @@
 ﻿# Changelog
 
+# 1.1.10
+
+* Avoiding unnecessary formatting ([#32](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/32))
+* Added the ability to rename the message template attribute ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/d277eafcef507753f635ad124ec523b0442b34b1))
+* Added a region in TargetTests.cs ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/6002af5a8ed86a13d21cb99e10a4b85461112935))
+* **Breaking change**:  Introduced ResolveLoggerProvider to use shared LoggerProvider dependency ([#31](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/31))
+* Faster check if SpanId / TraceId is empty ([#31](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/31))
+
 # 1.1.9
 
 * Added netstandard2.1 to TargetFrameworks ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/56308607102926d97fb84a9706e40b27c6873ebe))
