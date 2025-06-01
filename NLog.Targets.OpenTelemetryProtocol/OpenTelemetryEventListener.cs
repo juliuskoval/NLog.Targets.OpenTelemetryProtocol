@@ -38,7 +38,8 @@ namespace NLog.Targets.OpenTelemetryProtocol
                     if (NLog.Common.InternalLogger.IsInfoEnabled)
                     {
                         WriteInternalLogger(LogLevel.Info, eventMessage, payload);
-                    } break;
+                    }
+                    break;
                 case EventLevel.Warning:
                     if (NLog.Common.InternalLogger.IsWarnEnabled)
                     {
