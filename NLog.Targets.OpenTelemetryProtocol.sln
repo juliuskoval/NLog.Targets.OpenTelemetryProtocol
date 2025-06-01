@@ -20,6 +20,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenTelemetry.Exporter.Open
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestWebApp", "TestWebApp\TestWebApp.csproj", "{20C5B703-034E-4EC5-8E0D-35B682070277}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenTelemetry.Tests", "Internals\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj", "{63BC7516-B393-477B-A0CE-01231357ACAF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Internals", "Internals", "{DA380DE6-C859-4ADA-ADF9-1928139245A4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,9 +61,18 @@ Global
 		{20C5B703-034E-4EC5-8E0D-35B682070277}.Release|Any CPU.Build.0 = Release|Any CPU
 		{20C5B703-034E-4EC5-8E0D-35B682070277}.Test|Any CPU.ActiveCfg = Debug|Any CPU
 		{20C5B703-034E-4EC5-8E0D-35B682070277}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{63BC7516-B393-477B-A0CE-01231357ACAF}.Test|Any CPU.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{63BC7516-B393-477B-A0CE-01231357ACAF} = {DA380DE6-C859-4ADA-ADF9-1928139245A4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6F78646B-7705-487B-8279-7A91DCF02511}

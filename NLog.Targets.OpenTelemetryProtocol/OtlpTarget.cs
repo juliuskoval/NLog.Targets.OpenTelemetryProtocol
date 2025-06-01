@@ -14,7 +14,14 @@ using NLog.Targets.OpenTelemetryProtocol.Exceptions;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Logs.Custom;
 using OpenTelemetry.Resources;
+
+using LoggerProvider = OpenTelemetry.Logs.Custom.LoggerProviderSdkWrapper;
+using LogRecordAttributeList = OpenTelemetry.Logs.Custom.LogRecordAttributeList;
+using LogRecordSeverity = OpenTelemetry.Logs.Custom.LogRecordSeverity;
+using OtelLogger = OpenTelemetry.Logs.Custom.LoggerSdkWrapper;
+using Sdk = OpenTelemetry.Custom.Sdk;
 
 namespace NLog.Targets
 {
@@ -34,7 +41,7 @@ namespace NLog.Targets
 
         private OpenTelemetryEventListener _internalLoggerEventListener;
 
-        private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, OtelLogger> _loggers = new(StringComparer.Ordinal);
         private readonly object _sync = new object();
 
         private const string DefaultMessageTemplateAttribute = "{OriginalFormat}";
@@ -110,21 +117,25 @@ namespace NLog.Targets
                 _internalLoggerEventListener = new OpenTelemetryEventListener(this);
             }
 
-            _loggerProvider = ResolveOtlpLoggerProvider();
+            _loggerProvider = ResolveOtelLoggerProvider();
 
             base.InitializeTarget();
         }
 
-        private LoggerProvider ResolveOtlpLoggerProvider()
+        private LoggerProvider ResolveOtelLoggerProvider()
         {
             try
             {
                 if (ResolveLoggerProvider ?? true)
                 {
                     // Attempt to resolve shared OpenTelemetry LoggerProvider, that is used by the entire application
-                    var loggerProvider = this.ResolveService<LoggerProvider>();
+                    var loggerProvider = this.ResolveService<OpenTelemetry.Logs.LoggerProvider>();
                     InternalLogger.Info("{0}: Resolved shared OpenTelemetry LoggerProvider dependency", this);
-                    return loggerProvider;
+
+                    var lp = new LoggerProvider(loggerProvider);
+                    lp.AddProcessor(new LogRecordProcessor());
+
+                    return lp;
                 }
             }
             catch (NLogDependencyResolveException ex)
@@ -150,14 +161,16 @@ namespace NLog.Targets
             _processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
 
-            return Sdk.CreateLoggerProviderBuilder()
+            var provider = Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor())
                 .AddProcessor(_processor)
 #if TEST
                 .AddInMemoryExporter(LogRecords)
 #endif
-                .Build();
+                .BuildCustom();
+
+            return new LoggerProvider(provider);
         }
 
         private static EventLevel? ResolveInternalLoggerLevel()
@@ -297,7 +310,7 @@ namespace NLog.Targets
 
         protected override void Write(LogEventInfo logEvent)
         {
-            var data = new LogRecordData()
+            var data = new OpenTelemetry.Logs.Custom.LogRecordData()
             {
                 SeverityText = logEvent.Level.ToString(),
                 Severity = ResolveSeverity(logEvent.Level),
@@ -331,7 +344,7 @@ namespace NLog.Targets
             {
                 data.Body = logEvent.Message;
             }
-            
+
             AppendAttributes(logEvent, ref attributes);
             GetLogger(logEvent.LoggerName).EmitLog(data, attributes);
         }
@@ -428,9 +441,9 @@ namespace NLog.Targets
             { LogLevel.Trace.Ordinal, LogRecordSeverity.Trace },
         };
 
-        private OpenTelemetry.Logs.Logger GetLogger(string name)
+        private OtelLogger GetLogger(string name)
         {
-            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger logger))
+            if (!_loggers.TryGetValue(name, out OtelLogger logger))
             {
                 lock (_sync)
                 {

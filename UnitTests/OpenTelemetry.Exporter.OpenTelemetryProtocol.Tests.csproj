@@ -9,7 +9,7 @@
 
     <SignAssembly>True</SignAssembly>
 
-    <AssemblyOriginatorKeyFile>debug.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>../debug.snk</AssemblyOriginatorKeyFile>
 
     <Configurations>Debug;Release;Test</Configurations>
   </PropertyGroup>
