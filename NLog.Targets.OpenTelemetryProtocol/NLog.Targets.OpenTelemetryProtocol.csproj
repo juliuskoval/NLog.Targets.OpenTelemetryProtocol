@@ -14,6 +14,11 @@
     <PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Configurations>Debug;Release;Test</Configurations>
+	  
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>nlog.otlp.snk</AssemblyOriginatorKeyFile>
+
     <Configurations>Debug;Release;Test;Test</Configurations>
 
 
@@ -36,5 +41,9 @@
 
   <ItemGroup Condition=" '$(Configuration)' == 'Test' ">
     <PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="$(OpenTelemetryVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Internals\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj" />
   </ItemGroup>
 </Project>

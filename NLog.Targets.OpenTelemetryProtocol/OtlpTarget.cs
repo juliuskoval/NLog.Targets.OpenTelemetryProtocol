@@ -14,7 +14,14 @@ using NLog.Targets.OpenTelemetryProtocol.Exceptions;
 using OpenTelemetry;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
+using OpenTelemetry.Logs.Custom;
 using OpenTelemetry.Resources;
+
+using LoggerProvider = OpenTelemetry.Logs.Custom.LoggerProviderSdkWrapper;
+using LogRecordAttributeList = OpenTelemetry.Logs.Custom.LogRecordAttributeList;
+using LogRecordSeverity = OpenTelemetry.Logs.Custom.LogRecordSeverity;
+using OtelLogger = OpenTelemetry.Logs.Custom.LoggerSdkWrapper;
+using Sdk = OpenTelemetry.Custom.Sdk;
 
 namespace NLog.Targets
 {
@@ -30,11 +37,9 @@ namespace NLog.Targets
 
         private LoggerProvider _loggerProvider;
 
-        private BatchLogRecordExportProcessor _processor;
-
         private OpenTelemetryEventListener _internalLoggerEventListener;
 
-        private readonly ConcurrentDictionary<string, OpenTelemetry.Logs.Logger> _loggers = new(StringComparer.Ordinal);
+        private readonly ConcurrentDictionary<string, OtelLogger> _loggers = new(StringComparer.Ordinal);
         private readonly object _sync = new object();
 
         private const string DefaultMessageTemplateAttribute = "{OriginalFormat}";
@@ -94,7 +99,7 @@ namespace NLog.Targets
         {
             Layout = DefaultBodyLayout;
             IncludeEventProperties = true;
-            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);           
+            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         protected override void InitializeTarget()
@@ -110,21 +115,25 @@ namespace NLog.Targets
                 _internalLoggerEventListener = new OpenTelemetryEventListener(this);
             }
 
-            _loggerProvider = ResolveOtlpLoggerProvider();
+            _loggerProvider = ResolveOtelLoggerProvider();
 
             base.InitializeTarget();
         }
 
-        private LoggerProvider ResolveOtlpLoggerProvider()
+        private LoggerProvider ResolveOtelLoggerProvider()
         {
             try
             {
                 if (ResolveLoggerProvider ?? true)
                 {
                     // Attempt to resolve shared OpenTelemetry LoggerProvider, that is used by the entire application
-                    var loggerProvider = this.ResolveService<LoggerProvider>();
+                    var loggerProvider = this.ResolveService<OpenTelemetry.Logs.LoggerProvider>();
                     InternalLogger.Info("{0}: Resolved shared OpenTelemetry LoggerProvider dependency", this);
-                    return loggerProvider;
+
+                    var lp = new LoggerProvider(loggerProvider);
+                    lp.AddProcessor(new LogRecordProcessor());
+
+                    return lp;
                 }
             }
             catch (NLogDependencyResolveException ex)
@@ -147,17 +156,19 @@ namespace NLog.Targets
 
             var options = ResolveOtlpExporterOptionsFromName() ?? GetOtlpExporterOptions();
 
-            _processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
+            var processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
 
-            return Sdk.CreateLoggerProviderBuilder()
+            var provider = Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor())
-                .AddProcessor(_processor)
+                .AddProcessor(processor)
 #if TEST
                 .AddInMemoryExporter(LogRecords)
 #endif
-                .Build();
+                .BuildCustom();
+
+            return new LoggerProvider(provider);
         }
 
         private static EventLevel? ResolveInternalLoggerLevel()
@@ -269,15 +280,13 @@ namespace NLog.Targets
         {
             var logProvider = _loggerProvider;
             _loggerProvider = null;
-            var processor = _processor;
-            _processor = null;
 
             try
             {
-                if (processor != null)
+                if (_loggerProvider != null)
                     logProvider?.Dispose(); // Dedicated LoggerProvider, so have ownership
 
-                var result = processor?.Shutdown(1000) ?? true;
+                var result = _loggerProvider?.Shutdown(1000) ?? true;
                 if (!result)
                     InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
             }
@@ -292,7 +301,7 @@ namespace NLog.Targets
 
         protected override void FlushAsync(AsyncContinuation asyncContinuation)
         {
-            Task.Run(() => _processor?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
+            Task.Run(() => _loggerProvider?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
         }
 
         protected override void Write(LogEventInfo logEvent)
@@ -331,7 +340,7 @@ namespace NLog.Targets
             {
                 data.Body = logEvent.Message;
             }
-            
+
             AppendAttributes(logEvent, ref attributes);
             GetLogger(logEvent.LoggerName).EmitLog(data, attributes);
         }
@@ -428,9 +437,9 @@ namespace NLog.Targets
             { LogLevel.Trace.Ordinal, LogRecordSeverity.Trace },
         };
 
-        private OpenTelemetry.Logs.Logger GetLogger(string name)
+        private OtelLogger GetLogger(string name)
         {
-            if (!_loggers.TryGetValue(name, out OpenTelemetry.Logs.Logger logger))
+            if (!_loggers.TryGetValue(name, out OtelLogger logger))
             {
                 lock (_sync)
                 {
