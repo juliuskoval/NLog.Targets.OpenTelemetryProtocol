@@ -1,0 +1,5 @@
+<Project>
+  <PropertyGroup>
+    <OpenTelemetryVersion>1.11.0-rc.1</OpenTelemetryVersion>
+  </PropertyGroup>
+</Project>
