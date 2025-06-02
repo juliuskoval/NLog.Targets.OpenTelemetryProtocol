@@ -1,4 +1,4 @@
-﻿// Copyright The OpenTelemetry Authors
+// Copyright The OpenTelemetry Authors
 // SPDX-License-Identifier: Apache-2.0
 
 using System.Diagnostics;
@@ -11,9 +11,8 @@ namespace OpenTelemetry.Logs.Custom;
 /// <summary>
 /// Stores details about a log message.
 /// </summary>
-internal
 #pragma warning disable CA1815 // Override equals and operator equals on value types
-    struct LogRecordData
+internal struct LogRecordData
 #pragma warning restore CA1815 // Override equals and operator equals on value types
 {
     internal DateTime TimestampBacking = DateTime.UtcNow;
@@ -138,7 +137,7 @@ internal
             SpanId = this.SpanId,
             TraceFlags = this.TraceFlags,
             SeverityText = this.SeverityText,
-            //Severity = (OpenTelemetry.Logs.LogRecordSeverity)this.Severity,
+            Severity = SeverityMapper.Map(this.Severity),
             Body = this.Body,
         };
     }
