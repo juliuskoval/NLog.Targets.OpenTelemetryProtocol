@@ -14,10 +14,11 @@
     <PackageId>NLog.Targets.OpenTelemetryProtocol</PackageId>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Configurations>Debug;Release;Test;Test</Configurations>
+    <Configurations>Debug;Release;Test</Configurations>
+	  
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>nlog.otlp.snk</AssemblyOriginatorKeyFile>
 
-	<SignAssembly>True</SignAssembly>
-	<AssemblyOriginatorKeyFile>../debug.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>

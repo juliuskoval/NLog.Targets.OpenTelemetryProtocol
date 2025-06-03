@@ -37,8 +37,6 @@ namespace NLog.Targets
 
         private LoggerProvider _loggerProvider;
 
-        private BatchLogRecordExportProcessor _processor;
-
         private OpenTelemetryEventListener _internalLoggerEventListener;
 
         private readonly ConcurrentDictionary<string, OtelLogger> _loggers = new(StringComparer.Ordinal);
@@ -101,7 +99,7 @@ namespace NLog.Targets
         {
             Layout = DefaultBodyLayout;
             IncludeEventProperties = true;
-            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);           
+            OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
 
         protected override void InitializeTarget()
@@ -158,13 +156,13 @@ namespace NLog.Targets
 
             var options = ResolveOtlpExporterOptionsFromName() ?? GetOtlpExporterOptions();
 
-            _processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
+            var processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
             var resourceBuilder = CreateResourceBuilder();
 
             var provider = Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor())
-                .AddProcessor(_processor)
+                .AddProcessor(processor)
 #if TEST
                 .AddInMemoryExporter(LogRecords)
 #endif
@@ -282,15 +280,13 @@ namespace NLog.Targets
         {
             var logProvider = _loggerProvider;
             _loggerProvider = null;
-            var processor = _processor;
-            _processor = null;
 
             try
             {
-                if (processor != null)
+                if (_loggerProvider != null)
                     logProvider?.Dispose(); // Dedicated LoggerProvider, so have ownership
 
-                var result = processor?.Shutdown(1000) ?? true;
+                var result = _loggerProvider?.Shutdown(1000) ?? true;
                 if (!result)
                     InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
             }
@@ -305,12 +301,12 @@ namespace NLog.Targets
 
         protected override void FlushAsync(AsyncContinuation asyncContinuation)
         {
-            Task.Run(() => _processor?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
+            Task.Run(() => _loggerProvider?.ForceFlush(15000)).ContinueWith(t => asyncContinuation(t.Exception));
         }
 
         protected override void Write(LogEventInfo logEvent)
         {
-            var data = new OpenTelemetry.Logs.Custom.LogRecordData()
+            var data = new LogRecordData()
             {
                 SeverityText = logEvent.Level.ToString(),
                 Severity = ResolveSeverity(logEvent.Level),
