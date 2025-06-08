@@ -23,7 +23,7 @@
 
 
 	<PackageReleaseNotes>
-		See the full changelog [here](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/CHANGELOG.md)
+		Full changelog: https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/CHANGELOG.md
 	</PackageReleaseNotes>
   </PropertyGroup>
 
