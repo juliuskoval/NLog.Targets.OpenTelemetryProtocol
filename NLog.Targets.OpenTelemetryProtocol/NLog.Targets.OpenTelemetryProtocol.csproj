@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>Latest</LangVersion>
-    <Version>1.2.0</Version>
+    <Version>1.2.1</Version>
     <Authors>Julius Koval</Authors>
     <Description>NLog target used to export logs in the standardized OpenTelemetry format</Description>
     <IncludeSymbols>True</IncludeSymbols>
@@ -15,7 +15,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Configurations>Debug;Release;Test</Configurations>
-	  
+	
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>nlog.otlp.snk</AssemblyOriginatorKeyFile>
 

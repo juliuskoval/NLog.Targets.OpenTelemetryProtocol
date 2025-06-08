@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+# 1.2.1
+
+* Packing OpenTelemetry.Tests.dll together with the main package. ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/1fdaaeef9c5cde3fc3e172882f2f1f62fd5610c7))
+
 # 1.2.0
 
 * **Breaking change**: The package now depends on stable versions of OpenTelemetry packages.
