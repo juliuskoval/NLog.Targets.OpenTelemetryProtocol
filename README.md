@@ -3,6 +3,8 @@
 
 This target can export logs in the format defined in the OpenTelemetry specification using the OpenTelemetry.Exporter.OpenTelemetryProtocol package.
 
+See the changelog [here](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/CHANGELOG.md).
+
 For an explanation of the log data model, see https://opentelemetry.io/docs/specs/otel/logs/data-model/. <br>
 For an example, see https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/#examples.
 
