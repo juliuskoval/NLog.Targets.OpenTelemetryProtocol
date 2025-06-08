@@ -1,5 +1,12 @@
 ﻿# Changelog
 
+# 1.2.0
+
+* **Breaking change**: The package now depends on stable versions of OpenTelemetry packages.
+ This is made possible by a temporary workaround which means that the bin folder will contain OpenTelemetry.Tests.dll
+ ([#36](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/32))
+
+
 # 1.1.10
 
 * Avoiding unnecessary formatting ([#32](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/32))
