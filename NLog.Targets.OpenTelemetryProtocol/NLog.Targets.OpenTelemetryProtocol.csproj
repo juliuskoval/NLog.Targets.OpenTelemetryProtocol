@@ -44,6 +44,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Internals\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj" />
+    <ProjectReference Include="..\Internals\OpenTelemetry.Tests\OpenTelemetry.Tests.csproj" PrivateAssets="all"/>
+  </ItemGroup>
+
+  <ItemGroup>
+  	<None Include="..\Internals\OpenTelemetry.Tests\bin\Release\netstandard2.0\OpenTelemetry.Tests.dll"
+  		  Pack="true"
+  		  PackagePath="lib\netstandard2.0\" />
+  </ItemGroup>
+
+  <ItemGroup>
+  	<None Include="..\Internals\OpenTelemetry.Tests\bin\Release\netstandard2.1\OpenTelemetry.Tests.dll"
+  		  Pack="true"
+  		  PackagePath="lib\netstandard2.1\" />
   </ItemGroup>
 </Project>
