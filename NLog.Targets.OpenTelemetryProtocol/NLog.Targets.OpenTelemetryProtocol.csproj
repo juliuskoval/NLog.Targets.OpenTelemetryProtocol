@@ -15,6 +15,11 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Configurations>Debug;Release;Test;Test</Configurations>
+
+
+	<PackageReleaseNotes>
+		See the full changelog [here](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/CHANGELOG.md)
+	</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
