@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+# 1.2.2
+
+* Bug fix - disposing the loggerProvider when closing the target ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/c2af0185a5daecb953466e13a3c38dc2987f1e4a))
+
 # 1.2.1
 
 * Packing OpenTelemetry.Tests.dll together with the main package. ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/1fdaaeef9c5cde3fc3e172882f2f1f62fd5610c7))
