@@ -283,12 +283,8 @@ namespace NLog.Targets
 
             try
             {
-                if (_loggerProvider != null)
+                if (logProvider != null)
                     logProvider?.Dispose(); // Dedicated LoggerProvider, so have ownership
-
-                var result = _loggerProvider?.Shutdown(1000) ?? true;
-                if (!result)
-                    InternalLogger.Info("OtlpTarget(Name={0}) - Shutdown OpenTelemetry BatchProcessor unsuccessful", Name);
             }
             finally
             {
