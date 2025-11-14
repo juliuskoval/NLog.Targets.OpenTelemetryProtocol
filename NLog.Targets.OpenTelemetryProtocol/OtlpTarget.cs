@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NLog.Common;
 using NLog.Config;
@@ -16,7 +10,12 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Logs.Custom;
 using OpenTelemetry.Resources;
-
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Globalization;
+using System.Threading.Tasks;
 using LoggerProvider = OpenTelemetry.Logs.Custom.LoggerProviderSdkWrapper;
 using LogRecordAttributeList = OpenTelemetry.Logs.Custom.LogRecordAttributeList;
 using LogRecordSeverity = OpenTelemetry.Logs.Custom.LogRecordSeverity;
@@ -304,7 +303,7 @@ namespace NLog.Targets
         {
             var data = new LogRecordData()
             {
-                SeverityText = logEvent.Level.ToString(),
+                SeverityText = logEvent.Level.ToString().ToUpper(),
                 Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
             };
