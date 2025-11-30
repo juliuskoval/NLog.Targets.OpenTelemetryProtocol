@@ -382,7 +382,7 @@ public class TargetTests
         var logger = LogManager.GetCurrentClassLogger();
 
         OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.ExcludeProperties = new HashSet<string>() { "message", "someProperty"};
+        target.ExcludeProperties = new HashSet<string>() { "message", "someProperty" };
         target.Dispose();
         LogManager.ReconfigExistingLoggers();
 
@@ -608,6 +608,46 @@ public class TargetTests
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
     }
 
+    #endregion
+
+    #region SeverityText
+    [Theory]
+    [InlineData(null)]
+    [InlineData("${level}")]
+    [InlineData("${level:uppercase=true}")]
+    [InlineData("${level:format=FullName}")]
+    public void CustomizeSeverityText(string? layout)
+    {
+        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
+        var logger = LogManager.GetCurrentClassLogger();
+
+        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+        target.SeverityText = layout;
+        target.Dispose();
+        LogManager.ReconfigExistingLoggers();
+
+        var message = "message : {field}";
+        var parameter = "testing";
+
+        logger.Warn(message, parameter);
+
+        Assert.Single(target.LogRecords);
+
+        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        switch (layout)
+        {
+            case "${level:uppercase=true}":
+                Assert.Equal("WARN", otlpLogRecord.SeverityText);
+                break;
+            case "${level:format=FullName}":
+                Assert.Equal("Warning", otlpLogRecord.SeverityText);
+                break;
+            case null:
+            default:
+                Assert.Equal("Warn", otlpLogRecord.SeverityText);
+                break;
+        }
+    }
     #endregion
 
     private string ByteStringToHexString(Google.Protobuf.ByteString str)
