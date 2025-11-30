@@ -78,3 +78,4 @@ If you aren't doing structured logging, leave this as false.
   - `false` - Always create own dedicated OpenTelemetry LoggerProvider.
 - **DisableEventListener** : Disable dynamic configuration of Event Tracing (ETW) listener for detailed NLog InternalLogger output. By default false, optional.
 - **MessageTemplateAttribute** : The name of the attribute which contains the message template. By default `{OriginalFormat}`, optional.
+- **SeverityText** : Customize the SeverityText, see [Level Layout](https://github.com/NLog/NLog/wiki/Level-Layout-Renderer). By default `{level}`, optional.
