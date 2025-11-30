@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+# 1.2.3
+
+* Added the option to customize the layout for `SeverityText`. ([#41](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/41))
+
 # 1.2.2
 
 * Bug fix - disposing the loggerProvider when closing the target ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/c2af0185a5daecb953466e13a3c38dc2987f1e4a))
