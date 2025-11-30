@@ -1,4 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics.Tracing;
+using System.Globalization;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NLog.Common;
 using NLog.Config;
@@ -10,12 +16,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Logs.Custom;
 using OpenTelemetry.Resources;
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics.Tracing;
-using System.Globalization;
-using System.Threading.Tasks;
+
 using LoggerProvider = OpenTelemetry.Logs.Custom.LoggerProviderSdkWrapper;
 using LogRecordAttributeList = OpenTelemetry.Logs.Custom.LogRecordAttributeList;
 using LogRecordSeverity = OpenTelemetry.Logs.Custom.LogRecordSeverity;
@@ -31,8 +32,10 @@ namespace NLog.Targets
         private static readonly string EmptySpanIdToHexString = default(System.Diagnostics.ActivitySpanId).ToHexString();
 
         private static readonly Layout DefaultBodyLayout = "${message}";
+        private static readonly Layout DefaultSeverityTextLayout = "${level}";
 
         private bool _renderMessage = false;
+        private bool _renderSeverityText = false;
 
         private LoggerProvider _loggerProvider;
 
@@ -63,6 +66,8 @@ namespace NLog.Targets
         public Layout Headers { get; set; }
 
         public Layout ServiceName { get; set; }
+
+        public Layout SeverityText { get; set; }
 
         public Layout<int> ScheduledDelayMilliseconds { get; set; } = 5000;
 
@@ -97,6 +102,7 @@ namespace NLog.Targets
         public OtlpTarget()
         {
             Layout = DefaultBodyLayout;
+            SeverityText = DefaultSeverityTextLayout;
             IncludeEventProperties = true;
             OnlyIncludeProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         }
@@ -104,6 +110,9 @@ namespace NLog.Targets
         protected override void InitializeTarget()
         {
             _renderMessage = !Layout.ToString().Equals(DefaultBodyLayout.ToString());
+            _renderSeverityText = SeverityText != null
+                && !SeverityText.ToString().Equals(Layout.FromString(null).ToString())
+                && !SeverityText.Equals(DefaultSeverityTextLayout.ToString());
 
             _messageTemplateString = RenderLogEvent(MessageTemplateAttribute, LogEventInfo.CreateNullEvent(), DefaultMessageTemplateAttribute);
 
@@ -301,9 +310,10 @@ namespace NLog.Targets
 
         protected override void Write(LogEventInfo logEvent)
         {
+            var severityText = _renderSeverityText ? RenderLogEvent(SeverityText, logEvent) : logEvent.Level.ToString();
             var data = new LogRecordData()
             {
-                SeverityText = logEvent.Level.ToString().ToUpper(),
+                SeverityText = severityText,
                 Severity = ResolveSeverity(logEvent.Level),
                 Timestamp = logEvent.TimeStamp,
             };
