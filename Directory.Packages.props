@@ -1,5 +1,9 @@
 <Project>
   <PropertyGroup>
-    <OpenTelemetryVersion>1.12.0</OpenTelemetryVersion>
+    <OpenTelemetryVersion>1.15.0</OpenTelemetryVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+  	<WarningsAsErrors>MSB3277</WarningsAsErrors>
   </PropertyGroup>
 </Project>

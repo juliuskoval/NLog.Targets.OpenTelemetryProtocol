@@ -39,7 +39,7 @@ internal sealed class LoggerProviderSdkWrapper : LoggerProvider
 
     public bool ContainsBatchProcessor(BaseProcessor<LogRecord> processor)
     {
-        return loggerProviderSdk.ContainsBatchProcessor(processor);
+        return LoggerProviderSdk.ContainsBatchProcessor(processor);
     }
 
     protected override void Dispose(bool disposing)
