@@ -8,10 +8,6 @@ See the changelog [here](https://github.com/juliuskoval/NLog.Targets.OpenTelemet
 For an explanation of the log data model, see https://opentelemetry.io/docs/specs/otel/logs/data-model/. <br>
 For an example, see https://opentelemetry.io/docs/specs/otel/protocol/file-exporter/#examples.
 
-**Note that the OpenTelemetry logging API is still unfinished, which means that it is internal in stable releases and public in pre-release versions of the OpenTelemetry package.
-This package has a reference to pre-release version of the OpenTelemetry-nuget-package. If your project has a reference to a stable version higher than that,
-you will get a runtime error.**
-
 ## Configuration
 Example XML config: 
 ```xml
