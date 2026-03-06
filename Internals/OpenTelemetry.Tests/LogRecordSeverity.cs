@@ -38,13 +38,13 @@ internal enum LogRecordSeverity
     /// <summary>Info severity (9).</summary>
     Info = 9,
 
-    /// <summary>Info2 severity (11).</summary>
+    /// <summary>Info2 severity (10).</summary>
     Info2 = Info + 1,
 
-    /// <summary>Info3 severity (12).</summary>
+    /// <summary>Info3 severity (11).</summary>
     Info3 = Info2 + 1,
 
-    /// <summary>Info4 severity (13).</summary>
+    /// <summary>Info4 severity (12).</summary>
     Info4 = Info3 + 1,
 
     /// <summary>Warn severity (13).</summary>

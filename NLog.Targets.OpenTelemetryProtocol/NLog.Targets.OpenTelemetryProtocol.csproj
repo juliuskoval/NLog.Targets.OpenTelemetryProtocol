@@ -19,7 +19,7 @@
     <SignAssembly>True</SignAssembly>
     <AssemblyOriginatorKeyFile>nlog.otlp.snk</AssemblyOriginatorKeyFile>
 
-    <Configurations>Debug;Release;Test;Test</Configurations>
+    <Configurations>Debug;Release;Test</Configurations>
 
 
 	<PackageReleaseNotes>

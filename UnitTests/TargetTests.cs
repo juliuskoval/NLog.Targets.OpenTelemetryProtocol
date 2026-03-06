@@ -376,7 +376,7 @@ public class TargetTests
     #region PropertyExclusion
 
     [Fact]
-    public void ExludeProperties()
+    public void ExcludeProperties()
     {
         LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
         var logger = LogManager.GetCurrentClassLogger();
