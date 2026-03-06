@@ -248,7 +248,7 @@ namespace NLog.Targets
             catch (Exception ex)
             {
                 InternalLogger.Error(ex, "OtlpTarget(Name={0}) - An exception occurred when creating an export processor.", Name);
-                throw new FailedToCreateProcessorException("Failed to create an export processor");
+                throw new FailedToCreateProcessorException("Failed to create an export processor", ex);
             }
         }
 
@@ -278,7 +278,7 @@ namespace NLog.Targets
             catch (Exception ex)
             {
                 InternalLogger.Error(ex, "OtlpTarget(Name={0}) - An exception occurred when parsing resources.", Name);
-                throw new FailedToParseResourcesException("Failed to parse resources.");
+                throw new FailedToParseResourcesException("Failed to parse resources.", ex);
             }
 
             return resourceBuilder;
