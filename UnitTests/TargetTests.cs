@@ -16,29 +16,49 @@ public class TargetTests
 
 #if TEST
 
+    private (NLog.Logger logger, OtlpTarget target) SetupTarget(string configFile = "nlog.config", Action<OtlpTarget>? configure = null)
+    {
+        LogManager.Setup().LoadConfigurationFromFile(configFile, optional: false);
+        var logger = LogManager.GetCurrentClassLogger();
+        var target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
+
+        if (configure != null)
+        {
+            configure(target);
+            target.Dispose();
+            LogManager.ReconfigExistingLoggers();
+        }
+        else
+        {
+            LogManager.ReconfigExistingLoggers();
+        }
+
+        return (logger, target);
+    }
+
+    private static OtlpLogs.LogRecord ToSingleOtlpLog(OtlpTarget target)
+    {
+        Assert.Single(target.LogRecords);
+        return ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+    }
+
     #region IncludeFormattedMessage
 
     [Fact]
     public void IncludeFormattedMessageWithProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = true;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
         var expectedMessage = "message : \"testing\"";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -56,25 +76,19 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithPropertiesAndParameters()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = true;
-        target.IncludeEventParameters = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = true;
+            t.IncludeEventParameters = true;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
         var expectedMessage = "message : \"testing\"";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -92,20 +106,15 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageWithoutProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = true;
+        });
 
         var message = "message without parameters";
         logger.Info(message);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 0);
@@ -116,15 +125,12 @@ public class TargetTests
     [InlineData(CustomLayout)]
     public void IncludeFormattedMessageAndIncludeParameters(string? layout)
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = true;
-        target.IncludeEventParameters = true;
-        target.Layout = layout ?? target.Layout;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = true;
+            t.IncludeEventParameters = true;
+            t.Layout = layout ?? t.Layout;
+        });
 
         var message = "message : {0}";
         var parameter = "testing";
@@ -132,9 +138,7 @@ public class TargetTests
 
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         if (layout is null)
             Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
@@ -156,24 +160,18 @@ public class TargetTests
     [Fact]
     public void IncludeFormattedMessageAndDontIncludeParameters()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = true;
+        });
 
         var message = "message : {0}";
         var parameter = "testing";
         var expectedMessage = "message : testing";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -189,25 +187,19 @@ public class TargetTests
     {
         var templateString = "templateString";
 
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
-        target.IncludeFormattedMessage = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
+            t.IncludeFormattedMessage = true;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
         var expectedMessage = "message : \"testing\"";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(expectedMessage, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -229,30 +221,23 @@ public class TargetTests
     [InlineData(CustomLayout)]
     public void DontIncludeFormattedMessageWithProperties(string? layout)
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = false;
-        target.Layout = layout ?? target.Layout;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = false;
+            t.Layout = layout ?? t.Layout;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
 
         var index = 0;
-
         var attribute = otlpLogRecord.Attributes[index];
         Assert.Equal("field", attribute.Key);
         Assert.Equal(parameter, attribute.Value.StringValue);
@@ -261,22 +246,16 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = false;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = false;
+        });
 
         var message = "message without parameters";
 
-
         logger.Info(message);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -285,24 +264,18 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithParameters()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = false;
-        target.IncludeEventParameters = true;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = false;
+            t.IncludeEventParameters = true;
+        });
 
         var message = "message : {0}";
         var parameter = "testing";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -316,24 +289,18 @@ public class TargetTests
     [Fact]
     public void DontIncludeFormattedMessageWithoutParameters()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.IncludeFormattedMessage = false;
-        target.IncludeEventParameters = false;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeFormattedMessage = false;
+            t.IncludeEventParameters = false;
+        });
 
         var message = "message : {0}";
         var parameter = "testing";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -344,24 +311,18 @@ public class TargetTests
     {
         var templateString = "templateString";
 
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
-        target.IncludeFormattedMessage = false;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.MessageTemplateAttribute = new NLog.Layouts.Layout<string>(templateString);
+            t.IncludeFormattedMessage = false;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
 
-
         logger.Info(message, parameter);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Single(otlpLogRecord.Attributes);
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
@@ -378,24 +339,18 @@ public class TargetTests
     [Fact]
     public void ExcludeProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.ExcludeProperties = new HashSet<string>() { "message", "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ExcludeProperties = new HashSet<string>() { "message", "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -409,24 +364,18 @@ public class TargetTests
     [Fact]
     public void ExcludeNonExistentProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.ExcludeProperties = new HashSet<string>() { "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ExcludeProperties = new HashSet<string>() { "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -444,24 +393,18 @@ public class TargetTests
     [Fact]
     public void ExcludeAllProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.ExcludeProperties = new HashSet<string>() { "id", "message", "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ExcludeProperties = new HashSet<string>() { "id", "message", "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -470,24 +413,18 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.OnlyIncludeProperties = new HashSet<string>() { "id", "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.OnlyIncludeProperties = new HashSet<string>() { "id", "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Single(otlpLogRecord.Attributes);
@@ -501,25 +438,18 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeAllProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.OnlyIncludeProperties = new HashSet<string>() { "message", "id", "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.OnlyIncludeProperties = new HashSet<string>() { "message", "id", "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.True(otlpLogRecord.Attributes.Count() == 2);
@@ -537,24 +467,18 @@ public class TargetTests
     [Fact]
     public void OnlyIncludeNonExistentProperties()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.OnlyIncludeProperties = new HashSet<string>() { "someProperty" };
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.OnlyIncludeProperties = new HashSet<string>() { "someProperty" };
+        });
 
         var message = "message : {message}, id: {id}";
         var property1 = "testing";
         var property2 = 123;
 
-
         logger.Info(message, property1, property2);
 
-        Assert.Single(target.LogRecords);
-
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
@@ -567,11 +491,7 @@ public class TargetTests
     [Fact]
     public void ActivityContextIsPopulated()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget();
 
         var message = "message";
 
@@ -579,7 +499,7 @@ public class TargetTests
 
         logger.Info(message);
 
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
@@ -588,11 +508,7 @@ public class TargetTests
     [Fact]
     public void ActivityContextIsPopulatedIfAsync()
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog2.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configFile: "nlog2.config");
 
         var message = "message";
 
@@ -601,8 +517,7 @@ public class TargetTests
         logger.Info(message);
         LogManager.Flush();
 
-        Assert.Single(target.LogRecords);
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
@@ -618,22 +533,18 @@ public class TargetTests
     [InlineData("${level:format=FullName}")]
     public void CustomizeSeverityText(string? layout)
     {
-        LogManager.Setup().LoadConfigurationFromFile("nlog.config", optional: false);
-        var logger = LogManager.GetCurrentClassLogger();
-
-        OtlpTarget target = (OtlpTarget)LogManager.Configuration.AllTargets.First(x => x is OtlpTarget);
-        target.SeverityText = layout;
-        target.Dispose();
-        LogManager.ReconfigExistingLoggers();
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.SeverityText = layout;
+        });
 
         var message = "message : {field}";
         var parameter = "testing";
 
         logger.Warn(message, parameter);
 
-        Assert.Single(target.LogRecords);
+        var otlpLogRecord = ToSingleOtlpLog(target);
 
-        OtlpLogs.LogRecord otlpLogRecord = ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
         switch (layout)
         {
             case "${level:uppercase=true}":
