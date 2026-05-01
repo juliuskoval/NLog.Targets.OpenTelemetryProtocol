@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+# 1.2.7
+
+* Bumped versions of OpenTelemetry packages to 1.15.3. ([#44](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/pull/44))
+
 # 1.2.6
 
 * Bumped versions of OpenTelemetry packages to 1.15.0 and added net8.0 target in order to resolve dependency conflicts. ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/c931ed519578e3bc4f2f6d85a97a055e47169f45))
