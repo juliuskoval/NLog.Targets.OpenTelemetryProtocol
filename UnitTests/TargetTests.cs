@@ -1,5 +1,6 @@
 using NLog;
 using NLog.Targets;
+using OpenTelemetry;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Logs;
@@ -534,6 +535,156 @@ public class TargetTests
 
         Assert.Equal(currentActivity.TraceId.ToString(), ByteStringToHexString(otlpLogRecord.TraceId));
         Assert.Equal(currentActivity.SpanId.ToString(), ByteStringToHexString(otlpLogRecord.SpanId));
+    }
+
+    #endregion
+
+    #region IncludeBaggageItems
+
+    [Fact]
+    public void BaggageItemIsPopulated()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeBaggageItems = "user.id";
+        });
+
+        try
+        {
+            Baggage.SetBaggage("user.id", "12345");
+
+            logger.Info("message without parameters");
+
+            var otlpLogRecord = ToSingleOtlpLog(target);
+
+            Assert.Single(otlpLogRecord.Attributes);
+
+            var attribute = otlpLogRecord.Attributes[0];
+            Assert.Equal("user.id", attribute.Key);
+            Assert.Equal("12345", attribute.Value.StringValue);
+        }
+        finally
+        {
+            Baggage.Current = default;
+        }
+    }
+
+    [Fact]
+    public void MultipleBaggageItemsAreParsedFromSemicolonList()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeBaggageItems = "user.id ; tenant";
+        });
+
+        try
+        {
+            Baggage.SetBaggage("user.id", "12345");
+            Baggage.SetBaggage("tenant", "acme");
+
+            logger.Info("message without parameters");
+
+            var otlpLogRecord = ToSingleOtlpLog(target);
+
+            Assert.Equal(2, otlpLogRecord.Attributes.Count());
+            Assert.Contains(otlpLogRecord.Attributes, a => a.Key == "user.id" && a.Value.StringValue == "12345");
+            Assert.Contains(otlpLogRecord.Attributes, a => a.Key == "tenant" && a.Value.StringValue == "acme");
+        }
+        finally
+        {
+            Baggage.Current = default;
+        }
+    }
+
+    [Fact]
+    public void BaggageItemIsSkippedWhenMissing()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeBaggageItems = "user.id";
+        });
+
+        Baggage.Current = default;
+
+        logger.Info("message without parameters");
+
+        var otlpLogRecord = ToSingleOtlpLog(target);
+
+        Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    [Fact]
+    public void OnlyConfiguredBaggageItemsAreIncluded()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeBaggageItems = "user.id";
+        });
+
+        try
+        {
+            Baggage.SetBaggage("user.id", "12345");
+            Baggage.SetBaggage("tenant", "acme");
+
+            logger.Info("message without parameters");
+
+            var otlpLogRecord = ToSingleOtlpLog(target);
+
+            Assert.Single(otlpLogRecord.Attributes);
+            Assert.Contains(otlpLogRecord.Attributes, a => a.Key == "user.id" && a.Value.StringValue == "12345");
+        }
+        finally
+        {
+            Baggage.Current = default;
+        }
+    }
+
+    [Fact]
+    public void AllBaggageItemsAreAddedWithWildcard()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.IncludeBaggageItems = "*";
+        });
+
+        try
+        {
+            Baggage.SetBaggage("user.id", "12345");
+            Baggage.SetBaggage("tenant", "acme");
+
+            logger.Info("message without parameters");
+
+            var otlpLogRecord = ToSingleOtlpLog(target);
+
+            Assert.Equal(2, otlpLogRecord.Attributes.Count());
+            Assert.Contains(otlpLogRecord.Attributes, a => a.Key == "user.id" && a.Value.StringValue == "12345");
+            Assert.Contains(otlpLogRecord.Attributes, a => a.Key == "tenant" && a.Value.StringValue == "acme");
+        }
+        finally
+        {
+            Baggage.Current = default;
+        }
+    }
+
+    [Fact]
+    public void BaggageItemsAreNotIncludedWhenNotConfigured()
+    {
+        var (logger, target) = SetupTarget();
+
+        try
+        {
+            Baggage.SetBaggage("user.id", "12345");
+
+            logger.Info("message without parameters");
+
+            var otlpLogRecord = ToSingleOtlpLog(target);
+
+            Assert.Empty(otlpLogRecord.Attributes);
+        }
+        finally
+        {
+            Baggage.Current = default;
+        }
     }
 
     #endregion
