@@ -4,6 +4,7 @@ using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Logs;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
+using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
 namespace UnitTests;
 
@@ -40,6 +41,18 @@ public class TargetTests
     {
         Assert.Single(target.LogRecords);
         return ToOtlpLogs(DefaultSdkLimitOptions, new ExperimentalOptions(), target.LogRecords[0])!;
+    }
+
+    private static OtlpResource.Resource ToOtlpResource(OtlpTarget target)
+    {
+        // WriteLogsData serializes the full LogsData payload, which carries the resource
+        // (unlike WriteLogRecord, which only emits a single LogRecord). An empty batch is
+        // enough because we only care about the resource attributes here.
+        var buffer = new byte[4096];
+        var writePosition = ProtobufOtlpLogSerializer.WriteLogsData(ref buffer, 0, DefaultSdkLimitOptions, new ExperimentalOptions(), target.Resource, default);
+        using var stream = new MemoryStream(buffer, 0, writePosition);
+        var logsData = OtlpLogs.LogsData.Parser.ParseFrom(stream);
+        return logsData.ResourceLogs.Single().Resource;
     }
 
     #region IncludeFormattedMessage
@@ -559,6 +572,120 @@ public class TargetTests
                 break;
         }
     }
+    #endregion
+
+    #region Resources
+
+    [Fact]
+    public void CustomServiceNameIsAddedToResource()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ServiceName = "MyService";
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "service.name" && a.Value.StringValue == "MyService");
+    }
+
+    [Fact]
+    public void CustomResourcesAreAdded()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.Resources.Add(new TargetPropertyWithContext("deployment.environment", "production"));
+            t.Resources.Add(new TargetPropertyWithContext("service.version", "1.2.3"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && a.Value.StringValue == "production");
+        Assert.Contains(resource.Attributes, a => a.Key == "service.version" && a.Value.StringValue == "1.2.3");
+    }
+
+    [Fact]
+    public void ResourceValueSupportsLayoutRendering()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.Resources.Add(new TargetPropertyWithContext("host.name", "${machinename}"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name" && a.Value.StringValue == Environment.MachineName);
+    }
+
+    [Fact]
+    public void EmptyResourceValueIsStillAdded()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.Resources.Add(new TargetPropertyWithContext("custom.empty", ""));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "custom.empty" && a.Value.StringValue == "");
+    }
+
+    [Fact]
+    public void DefaultResourcesAreNotIncludedWhenDisabled()
+    {
+        var (logger, target) = SetupTarget();
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.DoesNotContain(resource.Attributes, a => a.Key == "telemetry.sdk.name");
+        Assert.DoesNotContain(resource.Attributes, a => a.Key == "telemetry.sdk.language");
+    }
+
+    [Fact]
+    public void DefaultResourcesAreIncludedWhenEnabled()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.UseDefaultResources = true;
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "telemetry.sdk.name" && a.Value.StringValue == "opentelemetry");
+        Assert.Contains(resource.Attributes, a => a.Key == "telemetry.sdk.language" && a.Value.StringValue == "dotnet");
+        Assert.Contains(resource.Attributes, a => a.Key == "service.instance.id");
+        Assert.Contains(resource.Attributes, a => a.Key == "telemetry.sdk.version");
+    }
+
+    [Fact]
+    public void CustomResourcesAreCombinedWithServiceName()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ServiceName = "MyService";
+            t.Resources.Add(new TargetPropertyWithContext("deployment.environment", "staging"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "service.name" && a.Value.StringValue == "MyService");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && a.Value.StringValue == "staging");
+    }
+
     #endregion
 
     private string ByteStringToHexString(Google.Protobuf.ByteString str)

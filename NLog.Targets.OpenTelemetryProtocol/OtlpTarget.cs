@@ -52,6 +52,8 @@ namespace NLog.Targets
 
 #if TEST
         public List<LogRecord> LogRecords;
+
+        public OpenTelemetry.Resources.Resource Resource => _loggerProvider?.Resource;
 #endif
         public bool IncludeEventParameters { get; set; }
 

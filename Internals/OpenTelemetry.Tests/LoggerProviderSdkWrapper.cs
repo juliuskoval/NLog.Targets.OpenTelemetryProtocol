@@ -27,6 +27,8 @@ internal sealed class LoggerProviderSdkWrapper : LoggerProvider
         loggerProviderSdk.AddProcessor(processor);
     }
 
+    public OpenTelemetry.Resources.Resource Resource => loggerProviderSdk.Resource;
+
     public bool ForceFlush(int timeoutMilliseconds = Timeout.Infinite)
     {
         return loggerProviderSdk.ForceFlush(timeoutMilliseconds);
