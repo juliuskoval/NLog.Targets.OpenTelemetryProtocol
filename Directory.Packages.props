@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <OpenTelemetryVersion>1.15.3</OpenTelemetryVersion>
+    <OpenTelemetryVersion>1.17.0</OpenTelemetryVersion>
   </PropertyGroup>
 
   <PropertyGroup>
