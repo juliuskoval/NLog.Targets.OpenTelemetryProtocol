@@ -1,4 +1,5 @@
 ﻿using System;
+using OpenTelemetry;
 using System.Threading;
 
 namespace NLog.Targets.OpenTelemetryProtocol.Test
@@ -7,6 +8,8 @@ namespace NLog.Targets.OpenTelemetryProtocol.Test
     {
         public static void Main()
         {
+            Baggage.SetBaggage("message.id", "1234");
+
             var logger = LogManager.GetCurrentClassLogger();
 
             var message = "testing";

@@ -27,7 +27,8 @@ Example XML config:
         scheduledDelayMilliseconds="1000"
         useDefaultResources="false"
         includeFormattedMessage="true"
-        onlyIncludeProperties="correlationId,messageId">
+        onlyIncludeProperties="correlationId,messageId"
+        IncludeBaggageItems="user.id">
           <attribute name="thread.id" layout="${threadid}" />
           <resource name="process.name" layout="${processname}" />
           <resource name="process.id" layout="${processid}" />
@@ -53,6 +54,7 @@ Example XML config:
 - **Attribute** : Attributes to be included with each LogEvent (optional)
   - _Name_ : Name of Attribute.
   - _Layout_ : Value of Attribute (If value is the same for all LogEvents, then add as resource instead)
+- **IncludeBaggageItems** : Semicolon-separated list of [OpenTelemetry Baggage](https://opentelemetry.io/docs/concepts/signals/baggage/) keys to include as attributes on each emitted log. Use `*` to include all baggage items. Resolved once at target initialize. (optional)
 - **MaxQueueSize** : The target uses a batch exporter, this defines the max queue size. By default 2048, optional.
 - **MaxExportBatchSize** : The target uses a batch exporter, this defines the max batch size. By default 512, optional.
 - **ScheduledDelayMilliseconds** : The target uses a batch exporter, this defines how often it is flushed in milliseconds. By default 5000, optional.

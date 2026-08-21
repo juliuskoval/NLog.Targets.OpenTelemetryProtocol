@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Globalization;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -48,6 +49,9 @@ namespace NLog.Targets
 
         private string _messageTemplateString;
 
+        private List<string> _baggageKeysToInclude;
+        private bool _includeAllBaggageKeys;
+
         public Layout<string> MessageTemplateAttribute { get; set; }
 
 #if TEST
@@ -91,6 +95,8 @@ namespace NLog.Targets
         [ArrayParameter(typeof(TargetPropertyWithContext), "attribute")]
         public IList<TargetPropertyWithContext> Attributes => ContextProperties;
 
+        public Layout IncludeBaggageItems { get; set; }
+
         public bool DisableEventListener { get; set; }
 
         /// <summary>
@@ -111,6 +117,19 @@ namespace NLog.Targets
 
         protected override void InitializeTarget()
         {
+            var baggage = RenderLogEvent(IncludeBaggageItems, LogEventInfo.CreateNullEvent());
+            if (!string.IsNullOrEmpty(baggage))
+            {
+                if (string.Equals(baggage, "*"))
+                {
+                    _includeAllBaggageKeys = true;
+                }
+                else
+                {
+                    _baggageKeysToInclude = baggage.Split(';').Select(x => x.Trim()).Where(y => !string.IsNullOrEmpty(y)).ToList();
+                }
+            }
+
             _renderMessage = !Layout.ToString().Equals(DefaultBodyLayout.ToString());
             _renderSeverityText = SeverityText != null
                 && !SeverityText.ToString().Equals(Layout.FromString(null).ToString())
@@ -405,6 +424,29 @@ namespace NLog.Targets
                         attributes.Add(property.Name, value);
                     }
                 }
+
+                AppendBaggageAttributes(ref attributes);
+            }
+        }
+
+        private void AppendBaggageAttributes(ref LogRecordAttributeList attributes)
+        {
+            if (_includeAllBaggageKeys)
+            {
+                foreach (var baggage in Baggage.GetBaggage())
+                    attributes.Add(baggage.Key, baggage.Value ?? string.Empty);
+                return;
+            }
+
+            for (int i = 0; i < _baggageKeysToInclude?.Count; i++)
+            {
+                var key = _baggageKeysToInclude[i];
+
+                var value = Baggage.GetBaggage(key);
+                if (string.IsNullOrEmpty(value))
+                    continue;
+
+                attributes.Add(key, value ?? string.Empty);
             }
         }
 
