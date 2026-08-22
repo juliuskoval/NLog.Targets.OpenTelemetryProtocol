@@ -88,6 +88,14 @@ namespace NLog.Targets
         [ArrayParameter(typeof(TargetPropertyWithContext), "resource")]
         public IList<TargetPropertyWithContext> Resources { get; } = new List<TargetPropertyWithContext>();
 
+        /// <summary>
+        /// Resource detectors from external packages, ex. OpenTelemetry.Resources.AWS (optional).
+        /// <para>Ignored when the target uses a shared OpenTelemetry LoggerProvider, see <see cref="ResolveLoggerProvider"/>,
+        /// since the resources are then owned by the application.</para>
+        /// </summary>
+        [ArrayParameter(typeof(ResourceDetector), "resourceDetector")]
+        public IList<ResourceDetector> ResourceDetectors { get; } = new List<ResourceDetector>();
+
         [ArrayParameter(typeof(TargetPropertyWithContext), "attribute")]
         public IList<TargetPropertyWithContext> Attributes => ContextProperties;
 
@@ -260,6 +268,25 @@ namespace NLog.Targets
 
             var useDefaultResources = RenderLogEvent(UseDefaultResources, defaultLogEvent, true);
             var resourceBuilder = useDefaultResources ? ResourceBuilder.CreateDefault() : ResourceBuilder.CreateEmpty();
+
+            // Applied before the resources configured below, since OpenTelemetry resolves conflicting attributes
+            // in favor of the last one added. This way explicit configuration wins over detected values.
+            for (int i = 0; i < ResourceDetectors.Count; ++i)
+            {
+                var resourceDetector = ResourceDetectors[i];
+
+                try
+                {
+                    resourceBuilder = resourceDetector.ApplyTo(resourceBuilder);
+                }
+                catch (Exception ex)
+                {
+                    // Resources are supplementary, so a detector that cannot be added must not stop the target from
+                    // logging. The package providing it is often only deployed in some of the environments that
+                    // share a configuration file.
+                    InternalLogger.Warn(ex, "OtlpTarget(Name={0}) - Skipping {1}, because it could not be added.", Name, resourceDetector);
+                }
+            }
 
             try
             {
