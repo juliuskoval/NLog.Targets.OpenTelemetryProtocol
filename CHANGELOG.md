@@ -4,6 +4,11 @@
 
 * Bumped versions of OpenTelemetry packages to 1.18.0. 
 
+* Added `ResourceDetector`, which makes it possible to use resource detectors from packages such as
+ `OpenTelemetry.Resources.AWS` without this library taking a dependency on them. A detector that cannot be
+ added is skipped with a warning, so the same configuration can be used in environments where its package is
+ not deployed. See the
+ [readme](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/blob/master/README.md#resource-detectors).
 
 # 1.2.8
 

@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="OpenTelemetry.Resources.Process" Version="1.18.0-rc.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\NLog.Targets.OpenTelemetryProtocol\NLog.Targets.OpenTelemetryProtocol.csproj" />
   </ItemGroup>
 

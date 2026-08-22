@@ -1,5 +1,6 @@
-using NLog;
+﻿using NLog;
 using NLog.Targets;
+using NLog.Targets.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Logs;
@@ -684,6 +685,288 @@ public class TargetTests
 
         Assert.Contains(resource.Attributes, a => a.Key == "service.name" && a.Value.StringValue == "MyService");
         Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && a.Value.StringValue == "staging");
+    }
+
+    #endregion
+
+    #region ResourceDetectors
+
+    private const string StubAssembly = "OpenTelemetry.Exporter.OpenTelemetryProtocol.Tests";
+    private const string StubExtensions = "UnitTests.StubResourceBuilderExtensions";
+
+    [Fact]
+    public void ResourceDetectorIsResolvedFromAssemblyAndMethod()
+    {
+        // The real OpenTelemetry.Resources.Host package, whose HostDetector is an internal type
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector("OpenTelemetry.Resources.Host", "AddHostDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name" && a.Value.StringValue == Environment.MachineName);
+    }
+
+    [Fact]
+    public void ResourceDetectorsAreReadFromXmlConfiguration()
+    {
+        var (logger, target) = SetupTarget("nlog-resourcedetector.config");
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Equal(3, target.ResourceDetectors.Count);
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name" && a.Value.StringValue == Environment.MachineName);
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector" && a.Value.StringValue == "detected");
+        Assert.Contains(resource.Attributes, a => a.Key == "public.detector" && a.Value.StringValue == "detected");
+        Assert.Contains(resource.Attributes, a => a.Key == "deployment.environment" && a.Value.StringValue == "DEV");
+    }
+
+    [Fact]
+    public void ResourceDetectorIsResolvedFromExplicitType()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector
+            {
+                Assembly = "OpenTelemetry.Resources.Host",
+                TypeName = "OpenTelemetry.Resources.HostResourceBuilderExtensions",
+                Method = "AddHostDetector",
+            });
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name" && a.Value.StringValue == Environment.MachineName);
+    }
+
+    [Fact]
+    public void ResourceDetectorWithOptionalParameterIsInvoked()
+    {
+        // Mirrors AddAWSEC2Detector(builder, Action<AWSResourceBuilderOptions> configure = null)
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddStubDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector" && a.Value.StringValue == "detected");
+    }
+
+    [Fact]
+    public void ResourceDetectorIsFoundAmongLoadedAssembliesWhenAssemblyIsOmitted()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector { Method = "AddSimpleStubDetector" });
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        // NotAStaticClass declares the same method but is not a static class, so it must be skipped
+        Assert.Contains(resource.Attributes, a => a.Key == "simple.stub.detector" && a.Value.StringValue == "detected");
+    }
+
+    [Fact]
+    public void ResourceDetectorPrefersTheOverloadWithFewestParameters()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddOverloadedStubDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "overload.parameters" && a.Value.StringValue == "0");
+    }
+
+    [Fact]
+    public void ResourceDetectorTypeIsInstantiatedWhenMethodIsOmitted()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector { Assembly = StubAssembly, TypeName = "UnitTests.PublicStubDetector" });
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "public.detector" && a.Value.StringValue == "detected");
+    }
+
+    [Fact]
+    public void MultipleResourceDetectorsAreApplied()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddStubDetector"));
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddSimpleStubDetector"));
+            t.ResourceDetectors.Add(new ResourceDetector("OpenTelemetry.Resources.Host", "AddHostDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector");
+        Assert.Contains(resource.Attributes, a => a.Key == "simple.stub.detector");
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name");
+    }
+
+    [Fact]
+    public void ConfiguredResourcesWinOverDetectedResources()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.Resources.Add(new TargetPropertyWithContext("host.name", "configured-host"));
+            t.ResourceDetectors.Add(new ResourceDetector("OpenTelemetry.Resources.Host", "AddHostDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "host.name" && a.Value.StringValue == "configured-host");
+        Assert.Single(resource.Attributes, a => a.Key == "host.name");
+        // The detector still contributes the attributes that were not configured explicitly
+        Assert.Contains(resource.Attributes, a => a.Key == "host.id");
+    }
+
+    [Fact]
+    public void ResourceDetectorsAreCombinedWithDefaultResources()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.UseDefaultResources = true;
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddStubDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "telemetry.sdk.name" && a.Value.StringValue == "opentelemetry");
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector" && a.Value.StringValue == "detected");
+    }
+
+    #endregion
+
+    #region ResourceDetectorErrors
+
+    [Theory]
+    // The assembly is not referenced by the application
+    [InlineData("OpenTelemetry.Resources.NotInstalled", null, "AddNotInstalledDetector")]
+    // The assembly is there, but the method is not
+    [InlineData("OpenTelemetry.Resources.Host", null, "AddMisspelledDetector")]
+    [InlineData("OpenTelemetry.Resources.Host", "OpenTelemetry.Resources.HostResourceBuilderExtensions", "AddMisspelledDetector")]
+    // The type does not exist
+    [InlineData("OpenTelemetry.Resources.Host", "OpenTelemetry.Resources.NoSuchType", "AddHostDetector")]
+    // Not resolvable among the loaded assemblies either
+    [InlineData(null, null, "AddMisspelledDetector")]
+    // A required second parameter means there is no callable overload to find
+    [InlineData(StubAssembly, null, "AddUncallableStubDetector")]
+    // Neither Method nor TypeName was given
+    [InlineData(null, null, null)]
+    // TypeName is not an IResourceDetector and no Method was given
+    [InlineData(StubAssembly, StubExtensions, null)]
+    // The detector cannot be constructed
+    [InlineData(StubAssembly, "UnitTests.NoParameterlessConstructorDetector", null)]
+    // The registration method itself throws
+    [InlineData(StubAssembly, null, "AddThrowingStubDetector")]
+    // The detector is found, but is not a detector at all
+    [InlineData(StubAssembly, "UnitTests.NotAStaticClass", null)]
+    public void ResourceDetectorThatCannotBeAddedIsSkipped(string? assembly, string? type, string? method)
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector { Assembly = assembly, TypeName = type, Method = method });
+        });
+
+        logger.Info("message");
+
+        // The target still works, it just exports without the resources the detector would have added
+        var otlpLogRecord = ToSingleOtlpLog(target);
+        Assert.Equal("message", otlpLogRecord.Body.StringValue);
+    }
+
+    [Fact]
+    public void ResourceDetectorThatIsNotFoundIsLoggedAsAWarning()
+    {
+        var output = CaptureInternalLog(t =>
+            t.ResourceDetectors.Add(new ResourceDetector("OpenTelemetry.Resources.NotInstalled", "AddNotInstalledDetector")));
+
+        Assert.Contains("Warn", output);
+        Assert.Contains("OpenTelemetry.Resources.NotInstalled", output);
+    }
+
+    /// <summary>
+    /// Captures NLog's InternalLogger output while the target is re-initialized with the given configuration.
+    /// </summary>
+    private string CaptureInternalLog(Action<OtlpTarget> configure)
+    {
+        var internalLog = new StringWriter();
+        var previousLogWriter = NLog.Common.InternalLogger.LogWriter;
+        var previousLogLevel = NLog.Common.InternalLogger.LogLevel;
+
+        try
+        {
+            SetupTarget(configure: target =>
+            {
+                // Assigned from inside the configure callback, so that it is in place for the re-initialization
+                // that SetupTarget performs afterwards - that is when the detectors are applied.
+                NLog.Common.InternalLogger.LogWriter = internalLog;
+                NLog.Common.InternalLogger.LogLevel = LogLevel.Warn;
+                configure(target);
+            });
+        }
+        finally
+        {
+            NLog.Common.InternalLogger.LogWriter = previousLogWriter;
+            NLog.Common.InternalLogger.LogLevel = previousLogLevel;
+        }
+
+        return internalLog.ToString();
+    }
+
+    [Fact]
+    public void ResourceDetectorsAreStillAppliedWhenAnotherOneIsNotFound()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector("OpenTelemetry.Resources.NotInstalled", "AddNotInstalledDetector"));
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddStubDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector" && a.Value.StringValue == "detected");
+    }
+
+    [Fact]
+    public void ResourceDetectorThatThrowsDuringRegistrationIsLoggedAsAWarning()
+    {
+        var output = CaptureInternalLog(t =>
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddThrowingStubDetector")));
+
+        Assert.Contains("Warn", output);
+        // The reason the registration failed has to survive into the warning
+        Assert.Contains("registration failed", output);
     }
 
     #endregion

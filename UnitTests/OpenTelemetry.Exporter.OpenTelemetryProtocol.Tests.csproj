@@ -44,6 +44,8 @@
 
   <ItemGroup>
     <PackageReference Include="Google.Protobuf" Version="3.29.3" />
+    <!-- Referenced so that the resource detector tests run against a real OpenTelemetry.Resources.* package -->
+    <PackageReference Include="OpenTelemetry.Resources.Host" Version="1.18.0-beta.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
@@ -65,6 +67,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Update="nlog2.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="nlog-resourcedetector.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
