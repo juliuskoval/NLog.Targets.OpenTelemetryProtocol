@@ -4,6 +4,7 @@ using NLog.Targets.OpenTelemetryProtocol;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation;
 using OpenTelemetry.Exporter.OpenTelemetryProtocol.Implementation.Serializer;
 using OpenTelemetry.Logs;
+using OtlpCommon = OpenTelemetry.Proto.Common.V1;
 using OtlpLogs = OpenTelemetry.Proto.Logs.V1;
 using OtlpResource = OpenTelemetry.Proto.Resource.V1;
 
@@ -496,6 +497,44 @@ public class TargetTests
 
         Assert.Equal(message, otlpLogRecord.Body.StringValue);
         Assert.Empty(otlpLogRecord.Attributes);
+    }
+
+    #endregion
+
+    #region KeyValueListProperties
+
+    [Fact]
+    public void KeyValueListPropertyIsSerializedAsKvlist()
+    {
+        var (logger, target) = SetupTarget();
+
+        var payload = new List<KeyValuePair<string, object?>>
+        {
+            new("text", "c"),
+            new("number", 1),
+            new("flag", true),
+        };
+
+        logger.Info("message: {payload}", payload);
+
+        var otlpLogRecord = ToSingleOtlpLog(target);
+
+        var attribute = Assert.Single(otlpLogRecord.Attributes);
+        Assert.Equal("payload", attribute.Key);
+        Assert.Equal(OtlpCommon.AnyValue.ValueOneofCase.KvlistValue, attribute.Value.ValueCase);
+
+        // Every entry keeps its own OTLP type, rather than the list collapsing into a single string
+        var values = attribute.Value.KvlistValue.Values;
+        Assert.Equal(3, values.Count);
+
+        Assert.Equal("text", values[0].Key);
+        Assert.Equal("c", values[0].Value.StringValue);
+
+        Assert.Equal("number", values[1].Key);
+        Assert.Equal(1L, values[1].Value.IntValue);
+
+        Assert.Equal("flag", values[2].Key);
+        Assert.True(values[2].Value.BoolValue);
     }
 
     #endregion
