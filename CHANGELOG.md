@@ -1,5 +1,10 @@
 ﻿# Changelog
 
+# Unreleased
+
+* Bumped versions of OpenTelemetry packages to 1.18.0. 
+
+
 # 1.2.8
 
 * Bumped versions of OpenTelemetry packages to 1.17.0. ([commit](https://github.com/juliuskoval/NLog.Targets.OpenTelemetryProtocol/commit/d71680dcecd786bfb524bbe0ad7f9f33294fab8b))
