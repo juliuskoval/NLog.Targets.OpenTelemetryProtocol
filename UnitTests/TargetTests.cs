@@ -879,6 +879,8 @@ public class TargetTests
     [InlineData(null, null, "AddMisspelledDetector")]
     // A required second parameter means there is no callable overload to find
     [InlineData(StubAssembly, null, "AddUncallableStubDetector")]
+    // [Optional] without a default value leaves nothing to pass, so it is not callable either
+    [InlineData(StubAssembly, null, "AddOptionalWithoutDefaultStubDetector")]
     // Neither Method nor TypeName was given
     [InlineData(null, null, null)]
     // TypeName is not an IResourceDetector and no Method was given
@@ -887,6 +889,9 @@ public class TargetTests
     [InlineData(StubAssembly, "UnitTests.NoParameterlessConstructorDetector", null)]
     // The registration method itself throws
     [InlineData(StubAssembly, null, "AddThrowingStubDetector")]
+    // The detector registers fine, but throws while detecting - OpenTelemetry does not guard that itself
+    [InlineData(StubAssembly, "UnitTests.ThrowingStubDetector", null)]
+    [InlineData(StubAssembly, null, "AddDetectorThatThrowsWhenDetecting")]
     // The detector is found, but is not a detector at all
     [InlineData(StubAssembly, "UnitTests.NotAStaticClass", null)]
     public void ResourceDetectorThatCannotBeAddedIsSkipped(string? assembly, string? type, string? method)
@@ -967,6 +972,32 @@ public class TargetTests
         Assert.Contains("Warn", output);
         // The reason the registration failed has to survive into the warning
         Assert.Contains("registration failed", output);
+    }
+
+    [Fact]
+    public void ResourceDetectorThatThrowsWhileDetectingIsLoggedAsAWarning()
+    {
+        var output = CaptureInternalLog(t =>
+            t.ResourceDetectors.Add(new ResourceDetector { Assembly = StubAssembly, TypeName = "UnitTests.ThrowingStubDetector" }));
+
+        Assert.Contains("Warn", output);
+        Assert.Contains("detector failed", output);
+    }
+
+    [Fact]
+    public void ResourceDetectorsAreStillAppliedWhenAnotherOneThrowsWhileDetecting()
+    {
+        var (logger, target) = SetupTarget(configure: t =>
+        {
+            t.ResourceDetectors.Add(new ResourceDetector { Assembly = StubAssembly, TypeName = "UnitTests.ThrowingStubDetector" });
+            t.ResourceDetectors.Add(new ResourceDetector(StubAssembly, "AddStubDetector"));
+        });
+
+        logger.Info("message");
+
+        var resource = ToOtlpResource(target);
+
+        Assert.Contains(resource.Attributes, a => a.Key == "stub.detector" && a.Value.StringValue == "detected");
     }
 
     #endregion

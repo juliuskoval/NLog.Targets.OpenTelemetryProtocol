@@ -100,18 +100,18 @@ reference these packages - the method is resolved with reflection at target init
 use stay a dependency of your application only. The detectors in the official packages are internal types, so
 the extension method is the only way to register them.
 
-Detector methods provided by the official packages - check the package's own README for the current list,
-as detectors do get added and removed between versions (`AddAWSECSDetector` and `AddAWSEKSDetector`, for
-instance, are gone as of `OpenTelemetry.Resources.AWS` 1.17.0):
+Detector methods provided by the official packages, as of the 1.18.0 release line - check the package's own
+README for the current list, as detectors do get added and removed between versions:
 
 | Package | Methods |
 | --- | --- |
-| `OpenTelemetry.Resources.AWS` | `AddAWSEC2Detector`, `AddAWSEBSDetector` |
+| `OpenTelemetry.Resources.AWS` | `AddAWSEC2Detector`, `AddAWSEBSDetector`, `AddAWSECSDetector`, `AddAWSEKSDetector` |
 | `OpenTelemetry.Resources.Azure` | `AddAzureAppServiceDetector`, `AddAzureVMDetector`, `AddAzureContainerAppsDetector` |
 | `OpenTelemetry.Resources.Container` | `AddContainerDetector` |
 | `OpenTelemetry.Resources.Host` | `AddHostDetector` |
-| `OpenTelemetry.Resources.Process` | `AddProcessDetector` |
 | `OpenTelemetry.Resources.OperatingSystem` | `AddOperatingSystemDetector` |
+| `OpenTelemetry.Resources.Process` | `AddProcessDetector` |
+| `OpenTelemetry.Resources.ProcessRuntime` | `AddProcessRuntimeDetector` |
 
 Your own detector can be registered by type instead, without an extension method:
 
@@ -126,9 +126,10 @@ A few things worth knowing:
 
 - Detected resources are applied **before** `<resource>` and `servicename`, so anything configured explicitly
  wins over a detected value of the same name.
-- A detector that cannot be added is skipped, and NLog's internal logger writes a warning naming it and the
- reason. Resources are supplementary, so a detector never stops the target from logging. This way the same
- configuration file can be deployed to environments where the detector's package is not present.
+- A detector that cannot be added, or that fails while detecting, is skipped, and NLog's internal logger
+ writes a warning naming it and the reason. Resources are supplementary, so a detector never stops the target
+ from logging. This way the same configuration file can be deployed to environments where the detector's
+ package is not present.
 - Because of that, a misspelled `method` is not an error either - it is simply reported as not found. Set
  `internalLogLevel="Warn"` to see which detectors were skipped, or `internalLogLevel="Debug"` to see each one
  as it is added. Worth checking once after configuring a detector, so a typo does not go unnoticed.

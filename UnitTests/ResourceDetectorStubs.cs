@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using OpenTelemetry.Resources;
 
 namespace UnitTests;
@@ -64,8 +65,16 @@ public static class StubResourceBuilderExtensions
     public static ResourceBuilder AddUncallableStubDetector(this ResourceBuilder builder, string required)
         => builder.AddDetector(new StubDetector("uncallable.detector", required));
 
+    /// <summary>Optional, but with no default value to pass along, so it cannot be called either.</summary>
+    public static ResourceBuilder AddOptionalWithoutDefaultStubDetector(this ResourceBuilder builder, [Optional] int flag)
+        => builder.AddDetector(new StubDetector("optional.without.default", "detected"));
+
     public static ResourceBuilder AddThrowingStubDetector(this ResourceBuilder builder)
         => throw new InvalidOperationException("registration failed");
+
+    /// <summary>Registers fine, but the detector it registers fails once it actually detects.</summary>
+    public static ResourceBuilder AddDetectorThatThrowsWhenDetecting(this ResourceBuilder builder)
+        => builder.AddDetector(new ThrowingStubDetector());
 }
 
 /// <summary>

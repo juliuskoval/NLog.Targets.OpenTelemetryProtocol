@@ -51,8 +51,8 @@ namespace NLog.Targets.OpenTelemetryProtocol
         public string Method { get; set; }
 
         /// <exception cref="FailedToResolveResourceDetectorException">
-        /// The detector could not be resolved or registered, ex. because the package providing it is not deployed
-        /// in this environment. The caller is expected to skip the detector.
+        /// The detector could not be resolved, registered or run, ex. because the package providing it is not
+        /// deployed in this environment. The caller is expected to skip the detector.
         /// </exception>
         internal ResourceBuilder ApplyTo(ResourceBuilder resourceBuilder)
         {
@@ -61,10 +61,29 @@ namespace NLog.Targets.OpenTelemetryProtocol
 
             var assembly = LoadAssembly();
 
-            if (string.IsNullOrEmpty(Method))
-                return AddDetectorInstance(resourceBuilder, assembly);
+            // The detector is registered on a builder of its own, which is built right here, so that
+            // IResourceDetector.Detect runs while the caller can still skip this detector. OpenTelemetry does not
+            // guard the detectors it builds, so a detector left on the target builder would instead throw from
+            // ResourceBuilder.Build() while the LoggerProvider is created, taking down the entire target.
+            var detectorBuilder = ResourceBuilder.CreateEmpty();
 
-            return InvokeExtensionMethod(resourceBuilder, ResolveExtensionMethod(assembly));
+            detectorBuilder = string.IsNullOrEmpty(Method)
+                ? AddDetectorInstance(detectorBuilder, assembly)
+                : InvokeExtensionMethod(detectorBuilder, ResolveExtensionMethod(assembly));
+
+            return resourceBuilder.AddAttributes(Detect(detectorBuilder));
+        }
+
+        private IEnumerable<KeyValuePair<string, object>> Detect(ResourceBuilder detectorBuilder)
+        {
+            try
+            {
+                return detectorBuilder.Build().Attributes;
+            }
+            catch (Exception ex)
+            {
+                throw new FailedToResolveResourceDetectorException($"{this} - Detecting resources threw an exception.", ex);
+            }
         }
 
         private System.Reflection.Assembly LoadAssembly()
@@ -180,6 +199,8 @@ namespace NLog.Targets.OpenTelemetryProtocol
         /// <summary>
         /// Picks the overload with the fewest parameters, so that a package offering both
         /// <c>Add..Detector(builder)</c> and <c>Add..Detector(builder, configure)</c> resolves to the simple one.
+        /// Overloads that tie are resolved in reflection order, which is not guaranteed to be stable - a package
+        /// offering two callable overloads of the same length would have to be pinned down with TypeName.
         /// </summary>
         private MethodInfo SelectMethod(Type declaringType)
         {
@@ -203,13 +224,14 @@ namespace NLog.Targets.OpenTelemetryProtocol
         private static bool IsResourceBuilderExtension(MethodInfo method)
         {
             var parameters = method.GetParameters();
-            if (parameters.Length == 0 || !parameters[0].ParameterType.IsAssignableFrom(typeof(ResourceBuilder)))
+            if (parameters.Length == 0 || parameters[0].ParameterType != typeof(ResourceBuilder))
                 return false;
 
-            // Anything beyond the ResourceBuilder must be optional, since there is no way to supply it from here
+            // Anything beyond the ResourceBuilder must carry a default value, since there is no way to supply it
+            // from here. IsOptional is not enough - [Optional] without a default leaves nothing to pass along.
             for (int i = 1; i < parameters.Length; ++i)
             {
-                if (!parameters[i].IsOptional)
+                if (!parameters[i].HasDefaultValue)
                     return false;
             }
 
@@ -222,7 +244,7 @@ namespace NLog.Targets.OpenTelemetryProtocol
             var arguments = new object[parameters.Length];
             arguments[0] = resourceBuilder;
             for (int i = 1; i < parameters.Length; ++i)
-                arguments[i] = parameters[i].HasDefaultValue ? parameters[i].DefaultValue : null;
+                arguments[i] = parameters[i].DefaultValue;
 
             try
             {
