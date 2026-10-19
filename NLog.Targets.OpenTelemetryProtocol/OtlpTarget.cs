@@ -180,16 +180,16 @@ namespace NLog.Targets
             var scheduledDelayMilliseconds = RenderLogEvent(ScheduledDelayMilliseconds, LogEventInfo.CreateNullEvent(), 5000);
 
             var options = ResolveOtlpExporterOptionsFromName() ?? GetOtlpExporterOptions();
-
-            var processor = CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds);
+            
             var resourceBuilder = CreateResourceBuilder();
 
             var provider = Sdk.CreateLoggerProviderBuilder()
                 .SetResourceBuilder(resourceBuilder)
                 .AddProcessor(new LogRecordProcessor())
-                .AddProcessor(processor)
 #if TEST
                 .AddInMemoryExporter(LogRecords)
+#else
+                .AddProcessor(CreateProcessor(options, maxQueueSize, maxExportBatchSize, scheduledDelayMilliseconds))
 #endif
                 .BuildCustom();
 
