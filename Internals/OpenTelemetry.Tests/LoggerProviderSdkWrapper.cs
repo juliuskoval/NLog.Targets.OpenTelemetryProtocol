@@ -7,20 +7,29 @@ internal sealed class LoggerProviderSdkWrapper : LoggerProvider
 {
     internal readonly LoggerProviderSdk loggerProviderSdk;
 
+    // Only a provider the wrapper owns is disposed along with it. A shared provider
+    // resolved from the application belongs to the application.
+    private readonly bool ownsProvider;
+
     public LoggerProviderSdkWrapper(
         IServiceProvider serviceProvider,
         bool ownsServiceProvider)
     {
         loggerProviderSdk = new LoggerProviderSdk(serviceProvider, ownsServiceProvider);
+        ownsProvider = true;
     }
 
-    public LoggerProviderSdkWrapper(LoggerProvider lp)
+    public LoggerProviderSdkWrapper(LoggerProvider lp, bool ownsProvider)
     {
         if (lp is LoggerProviderSdk provider)
             loggerProviderSdk = provider;
         else
             throw new Exception("LoggerProviderSdkWrapper can only be created from LoggerProviderSdk.");
+
+        this.ownsProvider = ownsProvider;
     }
+
+    internal bool IsDisposed => loggerProviderSdk.Disposed;
 
     public void AddProcessor(BaseProcessor<LogRecord> processor)
     {
@@ -46,6 +55,9 @@ internal sealed class LoggerProviderSdkWrapper : LoggerProvider
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing && ownsProvider)
+            loggerProviderSdk.Dispose();
+
         base.Dispose(disposing);
     }
 

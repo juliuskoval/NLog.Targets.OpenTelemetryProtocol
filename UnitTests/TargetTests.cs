@@ -1041,6 +1041,40 @@ public class TargetTests
 
     #endregion
 
+    #region LoggerProvider ownership
+
+    [Fact]
+    public void DedicatedLoggerProviderIsDisposedWhenTargetIsClosed()
+    {
+        var (_, target) = SetupTarget();
+
+        target.Dispose();
+
+        Assert.True(target.LastLoggerProviderIsDisposed);
+    }
+
+    [Fact]
+    public void SharedLoggerProviderIsNotDisposedWhenTargetIsClosed()
+    {
+        using var sharedProvider = OpenTelemetry.Sdk.CreateLoggerProviderBuilder().Build();
+
+        // A separate LogFactory, so that the shared provider is not resolved by other tests
+        var logFactory = new LogFactory();
+        logFactory.Setup()
+            .SetupExtensions(ext => ext.RegisterSingletonService(typeof(OpenTelemetry.Logs.LoggerProvider), sharedProvider))
+            .LoadConfigurationFromFile("nlog.config", optional: false);
+        var target = (OtlpTarget)logFactory.Configuration.AllTargets.First(x => x is OtlpTarget);
+
+        // LogRecords is only created when the target builds its own dedicated provider
+        Assert.Null(target.LogRecords);
+
+        logFactory.Shutdown();
+
+        Assert.False(target.LastLoggerProviderIsDisposed);
+    }
+
+    #endregion
+
     private string ByteStringToHexString(Google.Protobuf.ByteString str)
     {
         return BitConverter.ToString(str.ToByteArray()).Replace("-", "").ToLower();

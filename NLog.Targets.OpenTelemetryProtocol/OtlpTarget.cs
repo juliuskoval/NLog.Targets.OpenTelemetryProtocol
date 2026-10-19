@@ -54,6 +54,10 @@ namespace NLog.Targets
         public List<LogRecord> LogRecords;
 
         public OpenTelemetry.Resources.Resource Resource => _loggerProvider?.Resource;
+
+        private LoggerProvider _lastLoggerProvider;
+
+        public bool LastLoggerProviderIsDisposed => _lastLoggerProvider?.IsDisposed ?? false;
 #endif
         public bool IncludeEventParameters { get; set; }
 
@@ -134,6 +138,9 @@ namespace NLog.Targets
             }
 
             _loggerProvider = ResolveOtelLoggerProvider();
+#if TEST
+            _lastLoggerProvider = _loggerProvider;
+#endif
 
             base.InitializeTarget();
         }
@@ -148,7 +155,7 @@ namespace NLog.Targets
                     var loggerProvider = this.ResolveService<OpenTelemetry.Logs.LoggerProvider>();
                     InternalLogger.Info("{0}: Resolved shared OpenTelemetry LoggerProvider dependency", this);
 
-                    var lp = new LoggerProvider(loggerProvider);
+                    var lp = new LoggerProvider(loggerProvider, ownsProvider: false);
                     lp.AddProcessor(new LogRecordProcessor());
 
                     return lp;
@@ -186,7 +193,7 @@ namespace NLog.Targets
 #endif
                 .BuildCustom();
 
-            return new LoggerProvider(provider);
+            return new LoggerProvider(provider, ownsProvider: true);
         }
 
         private static EventLevel? ResolveInternalLoggerLevel()
@@ -320,8 +327,8 @@ namespace NLog.Targets
 
             try
             {
-                if (logProvider != null)
-                    logProvider?.Dispose(); // Dedicated LoggerProvider, so have ownership
+                // Only disposes the underlying provider when it is our dedicated one, not a shared one
+                logProvider?.Dispose();
             }
             finally
             {
