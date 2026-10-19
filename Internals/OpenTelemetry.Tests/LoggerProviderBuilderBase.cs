@@ -3,7 +3,9 @@
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using OpenTelemetry.Internal;
+using OpenTelemetry.SelfDiagnostics;
 
 namespace OpenTelemetry.Logs.Custom;
 
@@ -39,7 +41,7 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 
         services
             .AddOpenTelemetryLoggerProviderBuilderServices()
-            .TryAddSingleton<LoggerProvider>(sp => new LoggerProviderSdk(sp, ownsServiceProvider: false));
+            .TryAddSingleton<LoggerProvider>(sp => CreateProvider(sp, ownsServiceProvider: false));
 
         this.innerBuilder = new LoggerProviderServiceCollectionBuilder(services);
 
@@ -92,6 +94,24 @@ internal sealed class LoggerProviderBuilderBase : LoggerProviderBuilder, ILogger
 #endif
         var serviceProvider = services.BuildServiceProvider(validateScopes);
 
-        return new LoggerProviderSdk(serviceProvider, ownsServiceProvider: true);
+        return CreateProvider(serviceProvider, ownsServiceProvider: true);
+    }
+
+    private static LoggerProviderSdk CreateProvider(IServiceProvider serviceProvider, bool ownsServiceProvider)
+    {
+        // Register this provider as the current SDK self-diagnostics configuration owner,
+        // the same way the upstream LoggerProviderBuilderBase does.
+        var selfDiagnosticsRegistration = SelfDiagnosticsRegistration.Register(
+            serviceProvider.GetRequiredService<IOptionsMonitor<SelfDiagnosticsOptions>>());
+
+        try
+        {
+            return new LoggerProviderSdk(serviceProvider, ownsServiceProvider, selfDiagnosticsRegistration);
+        }
+        catch
+        {
+            selfDiagnosticsRegistration.Dispose();
+            throw;
+        }
     }
 }

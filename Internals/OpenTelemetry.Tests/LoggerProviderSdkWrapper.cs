@@ -11,14 +11,6 @@ internal sealed class LoggerProviderSdkWrapper : LoggerProvider
     // resolved from the application belongs to the application.
     private readonly bool ownsProvider;
 
-    public LoggerProviderSdkWrapper(
-        IServiceProvider serviceProvider,
-        bool ownsServiceProvider)
-    {
-        loggerProviderSdk = new LoggerProviderSdk(serviceProvider, ownsServiceProvider);
-        ownsProvider = true;
-    }
-
     public LoggerProviderSdkWrapper(LoggerProvider lp, bool ownsProvider)
     {
         if (lp is LoggerProviderSdk provider)

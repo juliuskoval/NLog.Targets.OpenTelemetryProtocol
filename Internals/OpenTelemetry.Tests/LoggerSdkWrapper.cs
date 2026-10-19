@@ -11,7 +11,10 @@ internal class LoggerSdkWrapper : Logger
            string? name) 
            : base(name)
     {
-        _loggerSdk = new LoggerSdk(lp.loggerProviderSdk, name);
+        _loggerSdk = new LoggerSdk(lp.loggerProviderSdk, new LoggerOptions
+        {
+            Name = name
+        });
     }
 
     public void EmitLog(in OpenTelemetry.Logs.Custom.LogRecordData data, in OpenTelemetry.Logs.Custom.LogRecordAttributeList attributes)
